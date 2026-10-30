@@ -1,0 +1,545 @@
+states:
+  anemo: 185
+  cryo: 185
+  hydro: 185
+  pyro: 185
+  geo: 185
+  electro: 185
+  dendro: 185
+  lunar: 100
+  stellar: 100
+  lunar-multiplier: 1.0
+  stellar-multiplier: 1.0
+
+
+elements:
+  apply-cooldown-ticks: 25
+
+action-bars:
+  # Active elemental state shown to players. Mobs use holograms.state below.
+  element-state:
+    enabled: true
+    format: "{symbol} {element} <reset><gray>({time}s)"
+    formats:
+      pyro: "<reset><red>{symbol} Pyro <reset><gray>({time}s)"
+      hydro: "<reset><blue>{symbol} Hydro <reset><gray>({time}s)"
+      cryo: "<reset><aqua>{symbol} Cryo <reset><gray>({time}s)"
+      electro: "<reset><dark_purple>{symbol} Electro <reset><gray>({time}s)"
+      anemo: "<reset><white>{symbol} Anemo <reset><gray>({time}s)"
+      geo: "<reset><gold>{symbol} Geo <reset><gray>({time}s)"
+      dendro: "<reset><dark_green>{symbol} Dendro <reset><gray>({time}s)"
+
+
+holograms:
+
+  optimize:
+    enabled: true
+    render-chunks: 6
+    refresh-ticks: 5
+
+  y-offset-extra-named: 0.3
+  state:
+    enabled: true
+    # Active elemental state shown above afflicted non-player living entities.
+    format: "<reset><green>%element% <reset><gray>(%time%s)"
+    update-period-ticks: 1
+    smooth-factor: 0.75
+    y-offset-base: 0.8
+    snap-dist2: 0.64
+    max-step: 0.35
+    teleport-dist2: 4.0
+
+
+    lead-ticks: 2.0
+
+
+    catchup-mult: 2.5
+
+
+
+
+    formats:
+      anemo: "<reset><white>Anemo <reset><gray>(%time%s)"
+      cryo: "<reset><aqua>Cryo <reset><gray>(%time%s)"
+      hydro: "<reset><blue>Hydro <reset><gray>(%time%s)"
+      pyro: "<reset><red>Pyro <reset><gray>(%time%s)"
+      geo: "<reset><gold>Geo <reset><gray>(%time%s)"
+      electro: "<reset><dark_purple>Electro <reset><gray>(%time%s)"
+      dendro: "<reset><dark_green>Dendro <reset><gray>(%time%s)"
+
+
+
+
+
+
+
+
+  reaction:
+    enabled: true
+    format: "<reset><light_purple>Reaction: %reaction%"
+    duration-ticks: 40
+    update-period-ticks: 1
+    smooth-factor: 0.75
+    y-offset-base: 1.1
+    snap-dist2: 0.64
+    max-step: 0.35
+    teleport-dist2: 4.0
+
+
+    lead-ticks: 2.0
+    catchup-mult: 2.5
+    formats:
+      frozen: "<reset><aqua>Frozen"
+      crystallize: "<reset><gold>Crystallize"
+      melt: "<reset><dark_red>Melt"
+      electrocharged: "<reset><yellow>Electro-Charged"
+      burning: "<reset><red>Burning"
+      overload: "<reset><dark_red>Overload"
+      superconductor: "<reset><white>Reaction: Superconductor"
+      swirl: "<reset><white>Swirl"
+      vaporize: "<reset><gray>Vaporize"
+      quicken: "<reset><dark_green>Quicken"
+      aggravate: "<reset><yellow>Aggravate"
+      spread: "<reset><dark_green>Spread"
+      bloom: "<reset><green>Bloom"
+      hyperbloom: "<reset><dark_purple>Hyperbloom"
+      burgeon: "<reset><red>Burgeon"
+      roots:
+
+
+      frozen_lunar: "<reset><#55ffff>C<reset><#77ffff>o<reset><#99ffff>n<reset><#bbffff>g<reset><#ddffff>e<reset><#ffffff>l<reset><#ddeeff>a<reset><#bbccff>d<reset><#99aadd>o <reset><#7788bb>L<reset><#556699>u<reset><#445577>n<reset><#334466>a<reset><#223355>r"
+      crystallize_lunar: "<reset><#ffaa00>C<reset><#ffb51a>r<reset><#ffc033>i<reset><#ffcb4d>s<reset><#ffd666>t<reset><#ffe180>a<reset><#ffec99>l<reset><#fff7b3>i<reset><#ffffff>z<reset><#dddddd>a<reset><#bbbbbb>d<reset><#999999>o <reset><#887766>L<reset><#776655>u<reset><#665544>n<reset><#554433>a<reset><#553311>r"
+      melt_lunar: "<reset><#aa0000>D<reset><#c43333>e<reset><#df6666>r<reset><#f99999>r<reset><#ffcccc>e<reset><#ffffff>t<reset><#e0d5d5>i<reset><#c2aaaa>d<reset><#a38080>o <reset><#855555>L<reset><#662b2b>u<reset><#551e1e>n<reset><#4d1818>a<reset><#441111>r"
+      electrocharged_lunar: "<reset><#ffff55>E<reset><#ffff66>l<reset><#ffff77>e<reset><#ffff88>c<reset><#ffff99>t<reset><#ffffaa>r<reset><#ffffbb>o<reset><#ffffcc>c<reset><#ffffdd>a<reset><#ffffee>r<reset><#ffffff>g<reset><#e6e6ee>a<reset><#ccccdd>d<reset><#b3b3cc>o <reset><#9999bb>L<reset><#8080aa>u<reset><#666699>n<reset><#554477>a<reset><#442255>r"
+      burning_lunar: "<reset><#ff5555>Q<reset><#ff7777>u<reset><#ff9999>e<reset><#ffbbbb>m<reset><#ffdddd>a<reset><#ffffff>d<reset><#ddcccc>u<reset><#bbaaaa>r<reset><#998888>a <reset><#776666>L<reset><#664444>u<reset><#5b2b2b>n<reset><#551e1e>a<reset><#551111>r"
+      overload_lunar: "<reset><#aa0000>S<reset><#bb2b2b>o<reset><#cc5555>b<reset><#dd8080>r<reset><#eeaaaa>e<reset><#ffd5d5>c<reset><#ffffff>a<reset><#e6d5e6>r<reset><#ccabcc>g<reset><#b380b3>a <reset><#995599>L<reset><#802b80>u<reset><#661566>n<reset><#551355>a<reset><#441144>r"
+      superconductor_lunar: "<reset><#ddeeff>S<reset><#e0f1ff>u<reset><#e4f4ff>p<reset><#e8f7ff>e<reset><#ecfaff>r<reset><#f0fdff>c<reset><#f4ffff>o<reset><#f8ffff>n<reset><#fcffff>d<reset><#ffffff>u<reset><#e6e6ee>c<reset><#ccccdd>t<reset><#b3b3cc>o<reset><#9999bb>r <reset><#8080aa>L<reset><#666699>u<reset><#555588>n<reset><#444466>a<reset><#333355>r"
+      swirl_lunar: "<reset><#ddffdd>T<reset><#e2ffe2>o<reset><#e8ffe8>r<reset><#edffed>b<reset><#f3fff3>e<reset><#f8fff8>l<reset><#ffffff>l<reset><#ddeedd>i<reset><#bbddbb>n<reset><#99cc99>o <reset><#77bb77>L<reset><#55aa55>u<reset><#448844>n<reset><#336633>a<reset><#224422>r"
+      vaporize_lunar: "<gradient:#aaaaaa:#334455>Vaporize Lunar</gradient>"
+      quicken_lunar: "<reset><white>quicken lunar"
+      aggravate_lunar: "<reset><white>aggravate lunar"
+      spread_lunar: "<reset><white>spread lunar"
+      bloom_lunar: "<reset><#55ff55>F<reset><#69ff69>l<reset><#7dff7d>o<reset><#92ff92>r<reset><#a6ffa6>e<reset><#bbffbb>c<reset><#cfffcf>i<reset><#e4ffe4>m<reset><#f8fff8>i<reset><#ffffff>e<reset><#ddf2e6>n<reset><#bbe6cc>t<reset><#99d9b3>o <reset><#77cc99>L<reset><#55bf80>u<reset><#33b366>n<reset><#22844d>a<reset><#115533>r"
+      hyperbloom_lunar: "<reset><#aa00aa>S<reset><#b21ab2>o<reset><#bb33bb>b<reset><#c34dc3>r<reset><#cc66cc>e<reset><#d480d4>f<reset><#dd99dd>l<reset><#e5b3e5>o<reset><#eeccee>r<reset><#f6e6f6>e<reset><#ffffff>c<reset><#e6e0f2>i<reset><#ccc2e6>m<reset><#b3a3d9>i<reset><#9985cc>e<reset><#8066bf>n<reset><#6647b3>t<reset><#5533a6>o <reset><#44228c>L<reset><#3c1a73>u<reset><#381666>n<reset><#35135e>a<reset><#331155>r"
+      burgeon_lunar: "<reset><#ff5555>C<reset><#ff8080>r<reset><#ffaaaa>e<reset><#ffd5d5>p<reset><#ffffff>i<reset><#ddcccc>t<reset><#bbaaaa>a<reset><#998888>r <reset><#776655>L<reset><#664433>u<reset><#553322>n<reset><#552b1a>a<reset><#552211>r"
+      roots_lunar: "<reset><white>roots lunar"
+
+
+      frozen_stellar: "<reset><#55ffff>C<reset><#44cccc>o<reset><#339999>n<reset><#226666>g<reset><#113333>e<reset><#111133>l<reset><#333355>a<reset><#555577>d<reset><#777799>o <reset><#9999bb>E<reset><#aaaacc>s<reset><#bbbbee>t<reset><#ccccff>e<reset><#ddddff>l<reset><#eeeeff>a<reset><#ffffff>r"
+      crystallize_stellar: "<reset><#ffaa00>C<reset><#e69900>r<reset><#cc8800>i<reset><#b37700>s<reset><#996600>t<reset><#805500>a<reset><#664400>l<reset><#4d3300>i<reset><#332200>z<reset><#331100>a<reset><#4a2a1a>d<reset><#614433>o <reset><#785d4d>E<reset><#8f7766>s<reset><#a69080>t<reset><#bdaa99>e<reset><#d4c4b3>l<reset><#ebe1cc>a<reset><#ffffff>r"
+      melt_stellar: "<reset><#aa0000>D<reset><#8f0000>e<reset><#750000>r<reset><#5a0000>r<reset><#400000>e<reset><#220000>t<reset><#381c1c>i<reset><#4f3939>d<reset><#665555>o <reset><#7c7272>E<reset><#938e8e>s<reset><#a9a9a9>t<reset><#c0c0c0>e<reset><#d7d7d7>l<reset><#eeeeee>a<reset><#ffffff>r"
+      electrocharged_stellar: "<reset><#ffff55>E<reset><#e6e64d>l<reset><#cccc44>e<reset><#b3b33c>c<reset><#999933>t<reset><#80802b>r<reset><#666622>o<reset><#4d4d1a>c<reset><#333311>a<reset><#2a1a22>r<reset><#220033>g<reset><#381c47>a<reset><#4f395c>d<reset><#665570>o <reset><#7c7285>E<reset><#938e99>s<reset><#a9a9ad>t<reset><#c0c0c2>e<reset><#d7d7d6>l<reset><#eeeeee>a<reset><#ffffff>r"
+      burning_stellar: "<reset><#ff5555>Q<reset><#d44747>u<reset><#aa3939>e<reset><#802b2b>m<reset><#551e1e>a<reset><#220000>d<reset><#3c1e1e>u<reset><#553d3d>r<reset><#6f5c5c>a <reset><#887a7a>E<reset><#a29999>s<reset><#bbb8b8>t<reset><#d5d6d6>e<reset><#efefef>l<reset><#f7f7f7>a<reset><#ffffff>r"
+      overload_stellar: "<reset><#aa0000>S<reset><#940005>o<reset><#7d000a>b<reset><#67000f>r<reset><#500014>e<reset><#3a001a>c<reset><#220022>a<reset><#3a1c3a>r<reset><#533953>g<reset><#6b556b>a <reset><#847284>E<reset><#9c8e9c>s<reset><#b5aab5>t<reset><#cdc7cd>e<reset><#e6e3e6>l<reset><#f3f1f3>a<reset><#ffffff>r"
+      superconductor_stellar: "<reset><#ddeeff>S<reset><#c4d5eb>u<reset><#abbcd6>p<reset><#92a3c2>e<reset><#798aae>r<reset><#607199>c<reset><#475885>o<reset><#2e3f70>n<reset><#15265c>d<reset><#111133>u<reset><#1f1f40>c<reset><#2e2e4d>t<reset><#3c3c5a>o<reset><#4a4a67>r <reset><#6b6b80>E<reset><#8c8c99>s<reset><#adadb3>t<reset><#cececc>e<reset><#efefe6>l<reset><#f7f7f3>a<reset><#ffffff>r"
+      swirl_stellar: "<reset><#ddffdd>T<reset><#b8ddb8>o<reset><#93bb93>r<reset><#6e996e>b<reset><#497749>e<reset><#245524>l<reset><#002200>l<reset><#173817>i<reset><#2e4e2e>n<reset><#456445>o <reset><#5c7a5c>E<reset><#739073>s<reset><#8aa68a>t<reset><#a1bca1>e<reset><#b8d2b8>l<reset><#cbe8cb>a<reset><#ffffff>r"
+      vaporize_stellar: "<gradient:#aaaaaa:#112233:#ffffff>Vaporize Stellar</gradient>"
+      quicken_stellar: "<reset><white>quicken stellar"
+      aggravate_stellar: "<reset><white>aggravate stellar"
+      spread_stellar: "<reset><white>spread stellar"
+      bloom_stellar: "<reset><#55ff55>F<reset><#47e64b>l<reset><#38cc42>o<reset><#2ab338>r<reset><#1c992e>e<reset><#0d8025>c<reset><#00661b>i<reset><#004d16>m<reset><#003311>i<reset><#1a4c26>e<reset><#33663c>n<reset><#4d8051>t<reset><#669967>o <reset><#80b37c>E<reset><#99cc92>s<reset><#b3e6a7>t<reset><#ccffbd>e<reset><#ddffd3>l<reset><#eeffe8>a<reset><#ffffff>r"
+      hyperbloom_stellar: "<reset><#aa00aa>S<reset><#9c009c>o<reset><#8e008e>b<reset><#800080>r<reset><#720072>e<reset><#640064>f<reset><#560056>l<reset><#480048>o<reset><#3a003a>r<reset><#2c002c>e<reset><#1e001e>c<reset><#110033>i<reset><#1d1244>m<reset><#2a2555>i<reset><#363766>e<reset><#424a77>n<reset><#4e5c88>t<reset><#5a6f99>o <reset><#6781aa>E<reset><#7394bb>s<reset><#7fa6cc>t<reset><#8cb9dd>e<reset><#98cbee>l<reset><#b5ddf4>a<reset><#ffffff>r"
+      burgeon_stellar: "<reset><#ff5555>C<reset><#d44040>r<reset><#aa2b2b>e<reset><#801515>p<reset><#550000>i<reset><#330000>t<reset><#4c1a1a>a<reset><#663333>r <reset><#804d4d>E<reset><#996666>s<reset><#b38080>t<reset><#cc9999>e<reset><#e6b3b3>l<reset><#f3d9d9>a<reset><#ffffff>r"
+      roots_stellar: "<reset><white>roots stellar"
+  bloom:
+    enabled: true
+    format: "<reset><green>Bloom <reset><gray>(%time%s)"
+    update-period-ticks: 1
+    smooth-factor: 0.75
+    y-offset-base: 0.9
+    snap-dist2: 0.64
+    max-step: 0.35
+    teleport-dist2: 4.0
+  crystal:
+    enabled: true
+    format: "<reset><gold>Crystal <reset><gray>(%time%s)"
+    update-period-ticks: 1
+    smooth-factor: 0.75
+    y-offset-base: 0.9
+    snap-dist2: 0.64
+    max-step: 0.35
+    teleport-dist2: 4.0
+
+
+formulas:
+  ModifyFormulas: false
+
+
+reactions:
+  cooldown-ticks: 35
+
+  cooldown-dendro-ticks: 35
+
+  cooldown-players-ticks: 35
+  cooldown-entities-ticks: 35
+  cooldown-dendro-players-ticks: 35
+  cooldown-dendro-entities-ticks: 35
+
+  global-icd-ticks: 65
+  hit-icd-ticks: 4
+  anti-stack:
+    radius-min: 2.0
+    interval-ticks: 20
+  multipliers:
+    frozen: 0.1
+    frozen-players: 0.05
+    crystallize: 1.0
+    crystallize-players: 0.3
+    melt: 2.5
+    melt-players: 0.8
+    electrocharged: 0.5
+    electrocharged-players: 0.2
+    burning: 0.5
+    burning-players: 0.2
+    overload: 2.0
+    overload-players: 0.7
+    superconductor: 1.0
+    superconductor-players: 0.3
+    swirl: 0.5
+    swirl-players: 0.2
+    vaporize: 1.5
+    vaporize-players: 0.5
+    quicken: "<reset><dark_green>Quicken"
+    quicken-players: 0.0
+    aggravate: "<reset><yellow>Aggravate"
+    aggravate-players: 0.5
+    spread: "<reset><dark_green>Spread"
+    spread-players: 0.2
+    bloom: 1.5
+    bloom-players: 0.1
+    hyperbloom: 1.5
+    hyperbloom-players: 0.1
+    burgeon: 2.5
+    burgeon-players: 0.1
+    roots:
+    roots-players: 0.2
+
+
+
+
+damage:
+  # Fraction of each damage type resisted; 0.2 reduces damage by 20%.
+  resistance:
+    physical: 0.0
+    anemo: 0.0
+    cryo: 0.0
+    hydro: 0.0
+    pyro: 0.0
+    geo: 0.0
+    electro: 0.0
+    dendro: 0.0
+
+parameters:
+  lunar-crystallize:
+    duration-ticks: 100
+    interval-ticks: 20
+  lunar-bloom:
+    duration-ticks: 200
+    heal: 6.0
+  lunar-charged:
+    duration-ticks: 100
+    interval-ticks: 20
+  stellar-conduct:
+    duration-ticks: 100
+    interval-ticks: 20
+    radius: 4.0
+  stellar-swirl:
+    duration-ticks: 100
+    interval-ticks: 10
+    radius: 4.0
+    merge-radius: 4.0
+  swirl:
+    radius: 4.0
+  electrocharged:
+    ticks: 5
+    interval-ticks: 10
+  burning:
+    ticks: 6
+    interval-ticks: 20
+  superconductor:
+    slowness-amplifier: 1
+    weakness-amplifier: 0
+    duration-ticks: 100
+  frozen:
+    duration-ticks: 100
+    slowness:
+      enabled: true
+      duration-ticks: 100
+      amplifier: 255
+      show-particles: false
+      show-icon: false
+  frozen-ice-items:
+    amount: 6
+    life-ticks: 60
+  crystallize:
+
+    duration-ticks: 100
+
+    radius-area: 2.5
+
+    interval-pulse-ticks: 10
+
+    pulse-multiplier: 0.5
+
+    particle: CRIT
+
+    anti-stack:
+      radius-min: 2.0
+      interval-ticks: 20
+
+    life-ticks: 100
+    radius: 1.5
+    cooldown-hit-ticks: 10
+  quicken:
+    duration-ticks: 200
+    radius-aggravate: 4.0
+    radius-spread: 4.0
+    apply-dendro-adjacent-amount: 1
+  bloom:
+    duration-ticks: 100
+    explosion-radius: 3.5
+    projectiles: 2
+    projectile-type: SHULKER_BULLET
+    projectile-speed: 1.0
+    hyperbloom-radius: 3.0
+    burgeon-radius: 3.5
+    affect-players: true
+
+    core-type: CHICKEN
+
+    visual-block: OAK_LEAVES
+
+    hitbox-segments: 8
+    hitbox-radius: 0.9
+    hitbox-height: 0.3
+
+
+    spawn-offset: 1.2
+
+    missile:
+      period-ticks: 2
+      speed: 1.0
+      life-ticks: 60
+      turn-strength: 0.25
+      hit-radius: 0.6
+      search-radius: 16.0
+      particles:
+        type1: ELECTRIC_SPARK
+        amount1: 3
+        type2: END_ROD
+        amount2: 1
+  roots:
+
+    duration-ticks: 120
+
+    radius: 3.0
+
+    interval-pulse-ticks: 10
+
+    slowness-amplifier: 1
+    slowness-duration-ticks: 14
+
+    particle: BLOCK_DUST
+    block-material: ROOTED_DIRT
+
+    branches: 8
+    curve: 0.35
+
+    anti-stack:
+      radius-min: 2.5
+      interval-ticks: 20
+
+
+
+
+ambient:
+
+
+  scan-period-ticks: 5
+
+  default-amount: 2
+  amounts:
+    pyro:
+      lava: 3
+      fire: 2
+      default: 2
+    hydro:
+      water: 3
+      rain: 1
+      default: 2
+    cryo:
+      snow: 1
+      powder-snow: 2
+      snow-block: 1
+      fall-snow: 1
+      default: 2
+    electro:
+      lightning: 3
+      default: 2
+    dendro:
+
+      fall-plant: 2
+      fall-grass: 2
+      fall-hay: 2
+      fall-leaves: 2
+      fall-mycelium: 2
+      cactus: 2
+      default: 2
+    geo:
+
+      fall-rock: 2
+      fall-stone: 2
+      fall-cobblestone: 2
+      fall-diorite: 2
+      fall-andesite: 2
+      fall-granite: 2
+      default: 2
+
+
+
+  geo-storm:
+
+
+    chance: 0.02
+    radius: 14.0
+    amount: 1
+    slowness-amplifier: 1
+    slowness-duration-ticks: 60
+    cooldown-ticks: 200
+    biomes: [DESERT, DESERT_HILLS, BADLANDS, ERODED_BADLANDS]
+  dendro-breeze:
+
+
+    chance: 0.02
+    radius: 12.0
+    amount: 1
+    cooldown-ticks: 160
+    biomes: [FOREST, BIRCH_FOREST, TAIGA, JUNGLE, SPARSE_JUNGLE]
+  pyro-heat:
+
+
+    chance: 0.02
+    radius: 10.0
+    amount: 1
+    cooldown-ticks: 160
+
+
+regions:
+
+  file: regions.yml
+
+  restrictions:
+    enabled: true
+    wg-default-block: true
+    custom-default-block: true
+
+
+debug: false
+weapons-element-logs: true
+
+effects:
+
+
+  armor: false
+  artifact: true
+
+
+armor:
+  lores:
+
+    padded: "<reset><white>Padded"
+    waterproof: "<reset><dark_aqua>Waterproof"
+    fireproof: "<reset><red>Fireproof"
+    antistatic: "<reset><dark_purple>Antistatic"
+
+
+artifact:
+  lores:
+
+    padded: "<reset><white>Padded"
+    waterproof: "<reset><dark_aqua>Waterproof"
+    fireproof: "<reset><red>Fireproof"
+    antistatic: "<reset><dark_purple>Antistatic"
+
+  use-inventory-slots: true
+
+  slots:
+    1: Padded
+    2: Waterproof
+    3: Fireproof
+    4: Antistatic
+    5: Bono
+
+  bonus:
+    lore:
+      - "<reset><gold>❖<reset><white>Elemental application increase <reset><gold><bold>Elemental<reset><dark_gray>: <reset><green><x>"
+      - "<reset><blue>🌊 <reset><white>Application increase <reset><dark_aqua><bold>Hydro<reset><dark_gray>: <reset><green><x>"
+      - "<reset><red>🔥 <reset><white>Application increase <reset><red><bold>Pyro<reset><dark_gray>: <reset><green><x>"
+      - "<reset><aqua>❄ <reset><white>Application increase <reset><aqua><bold>Cryo<reset><dark_gray>: <reset><green><x>"
+      - "<reset><dark_purple>⚡ <reset><white>Application increase <reset><dark_purple><bold>Electro<reset><dark_gray>: <reset><green><x>"
+      - "<reset><dark_green>☘ <reset><white>Application increase <reset><dark_green><bold>Dendro<reset><dark_gray>: <reset><green><x>"
+      - "<reset><gold>₪ <reset><white>Application increase <reset><gold><bold>Geo<reset><dark_gray>: <reset><green><x>"
+      - "<reset><white>♨ <reset><white>Application increase <reset><white><bold>Anemo<reset><dark_gray>: <reset><green><x>"
+
+
+inventory:
+  artifacts:
+
+    counter-apply-lore: "<reset><white>❖ <reset><white>Counterattack application<reset><dark_gray>: <reset><green>{amount}"
+    explosion-apply-lore: "<reset><white>❖ <reset><white>Elemental Explosion<reset><dark_gray>: <reset><green>{amount}"
+    explosion-radius-lore: "<reset><white>❖ <reset><white>Explosion radius<reset><dark_gray>: <reset><green>{amount}"
+    explosion-default-radius: 3.5
+
+    explosion-application-element: 50%
+
+    messages:
+      counter: "<reset><dark_gray>[<reset><gold>Genshin<reset><dark_gray>] <reset><white>You affected with <reset><green>{amount} <reset><white>of {element} <reset><white>the enemy that hit you."
+      explosion: "<reset><dark_gray>[<reset><gold>Genshin<reset><dark_gray>] <reset><white>Area counterattack: <reset><green>{amount} <reset><white>of {element} <reset><white>in radius {radius}"
+
+
+aplying-other-elements-single-player: true
+
+
+application_holograms:
+  enabled: true
+  format: "{symbol} <reset><white>{element} <reset><gray>x{amount}"
+  formats:
+    hydro: "<reset><blue>🌊 <reset><dark_aqua>Hydro <reset><white>x{amount}"
+    pyro: "<reset><red>🔥 <reset><red>Pyro <reset><white>x{amount}"
+    cryo: "<reset><aqua>❄ <reset><aqua>Cryo <reset><white>x{amount}"
+    electro: "<reset><dark_purple>⚡ <reset><dark_purple>Electro <reset><white>x{amount}"
+    dendro: "<reset><dark_green>☘ <reset><dark_green>Dendro <reset><white>x{amount}"
+    geo: "<reset><gold>₪ <reset><gold>Geo <reset><white>x{amount}"
+    anemo: "<reset><white>♨ <reset><white>Anemo <reset><white>x{amount}"
+  y-offset: 1.0
+  small: true
+  up-per-tick: 0.045
+  period: 1
+  duration-ticks: 45
+
+
+artifacts-bono-logs: true
+
+
+items:
+  elemental:
+
+
+    cooldown-seconds: 2
+
+protection:
+  elementAvoid:
+
+
+    baseChance: 0.15
+
+    message: "<reset><dark_gray>[<reset><gold>Genshin<reset><dark_gray>] <reset><white>You avoided being affected by {element}"
+
+protections:
+
+
+
+  base-chance-avoid-element-from-weapons-and-commands: 0.15
+
+messages:
+  avoid-element-armors-artifacts: "<reset><dark_gray>[<reset><gold>Genshin<reset><dark_gray>] <reset><white>You avoided being affected by {element}"

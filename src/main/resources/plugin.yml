@@ -1,0 +1,48 @@
+name: genshin
+version: '${version}'
+
+main: org.plary.genshin.Genshin
+api-version: '1.21.11'
+load: POSTWORLD
+authors: [The_Alejo, Plary]
+description: Configurable elemental combat and reactions for Paper 1.21.11
+softdepend: [WorldGuard, WorldEdit, Citizens, MMOCore, PlaceholderAPI]
+commands:
+  genshin:
+    description: Elemental combat, items, regions and configuration
+    usage: /genshin <reload|register|element|putelement|give|removeholo|armorstatus|artifactstatus|pos1|pos2|createregion|bonuselement>
+    aliases: [tg]
+permissions:
+  genshin.reload:
+    default: op
+  genshin.register:
+    default: op
+  genshin.element:
+    default: op
+  genshin.putelement:
+    default: op
+  genshin.give:
+    default: op
+  genshin.removeholo:
+    default: op
+  genshin.armorstatus:
+    default: true
+  genshin.artifactstatus:
+    default: true
+  genshin.regions:
+    default: op
+  genshin.bonuselement:
+    default: op
+  genshin.*:
+    default: op
+    children:
+      genshin.reload: true
+      genshin.register: true
+      genshin.element: true
+      genshin.putelement: true
+      genshin.give: true
+      genshin.removeholo: true
+      genshin.armorstatus: true
+      genshin.artifactstatus: true
+      genshin.regions: true
+      genshin.bonuselement: true

@@ -1,0 +1,549 @@
+items:
+  stellar_cryo:
+    name: '<gradient:#80ffff:#1e05fa>Stellar linchpin</gradient>'
+    # Damage type is independent of elemental application. Omit for physical.
+    damage-type: cryo
+    elements:
+      anemo:
+        enabled: false
+        amount: 0
+      cryo:
+        enabled: true
+        amount: 1
+      dendro:
+        enabled: false
+        amount: 0
+      electro:
+        enabled: false
+        amount: 0
+      geo:
+        enabled: false
+        amount: 0
+      hydro:
+        enabled: false
+        amount: 0
+      pyro:
+        enabled: false
+        amount: 0
+      elemental:
+        enabled: false
+        amount: 0
+      #a weapon can only be lunar or stellar, not both
+      lunar:
+        enabled: false #reactions performed with this weapon are lunar
+        bonus: 0 #increases lunar reaction damage by 1%
+      stellar:
+        enabled: true #when active, reactions performed with this weapon are stellar
+        bonus: 20 #increases stellar reaction damage by x%
+  lunar_hydro:
+    name: '<gradient:#83a4fc:#34b0cb>Tri-lunar authority</gradient>'
+    # Damage type is independent of elemental application. Omit for physical.
+    damage-type: hydro
+    elements:
+      anemo:
+        enabled: false
+        amount: 0
+      cryo:
+        enabled: false
+        amount: 1
+      dendro:
+        enabled: false
+        amount: 0
+      electro:
+        enabled: false
+        amount: 0
+      geo:
+        enabled: false
+        amount: 0
+      hydro:
+        enabled: true
+        amount: 1
+      pyro:
+        enabled: false
+        amount: 0
+      elemental:
+        enabled: false
+        amount: 0
+      #a weapon can only be lunar or stellar, not both
+      lunar:
+        enabled: true #reactions performed with this weapon are lunar
+        bonus: 20 #increases lunar reaction damage by 1%
+      stellar:
+        enabled: false #when active, reactions performed with this weapon are stellar
+        bonus: 0 #increases stellar reaction damage by x%
+  vision_anemo:
+    name: '<#8ce6ff>Anemo Vision</#8ce6ff>'
+    damage-type: anemo
+    elements:
+      anemo:
+        enabled: true
+        amount: 1
+      cryo:
+        enabled: false
+        amount: 0
+      dendro:
+        enabled: false
+        amount: 0
+      electro:
+        enabled: false
+        amount: 0
+      geo:
+        enabled: false
+        amount: 0
+      hydro:
+        enabled: false
+        amount: 0
+      pyro:
+        enabled: false
+        amount: 0
+      elemental:
+        enabled: false
+        amount: 0
+      lunar:
+        enabled: false
+        bonus: 0
+      stellar:
+        enabled: false
+        bonus: 0
+  vision_cryo:
+    name: '<#9fffff>Cryo Vision</#9fffff>'
+    damage-type: cryo
+    elements:
+      anemo:
+        enabled: false
+        amount: 0
+      cryo:
+        enabled: true
+        amount: 1
+      dendro:
+        enabled: false
+        amount: 0
+      electro:
+        enabled: false
+        amount: 0
+      geo:
+        enabled: false
+        amount: 0
+      hydro:
+        enabled: false
+        amount: 0
+      pyro:
+        enabled: false
+        amount: 0
+      elemental:
+        enabled: false
+        amount: 0
+      lunar:
+        enabled: false
+        bonus: 0
+      stellar:
+        enabled: false
+        bonus: 0
+  vision_dendro:
+    name: '<#8cff8c>Dendro Vision</#8cff8c>'
+    damage-type: dendro
+    elements:
+      anemo:
+        enabled: false
+        amount: 0
+      cryo:
+        enabled: false
+        amount: 0
+      dendro:
+        enabled: true
+        amount: 1
+      electro:
+        enabled: false
+        amount: 0
+      geo:
+        enabled: false
+        amount: 0
+      hydro:
+        enabled: false
+        amount: 0
+      pyro:
+        enabled: false
+        amount: 0
+      elemental:
+        enabled: false
+        amount: 0
+      lunar:
+        enabled: false
+        bonus: 0
+      stellar:
+        enabled: false
+        bonus: 0
+  vision_electro:
+    name: '<#c88cff>Electro Vision</#c88cff>'
+    damage-type: electro
+    elements:
+      anemo:
+        enabled: false
+        amount: 0
+      cryo:
+        enabled: false
+        amount: 0
+      dendro:
+        enabled: false
+        amount: 0
+      electro:
+        enabled: true
+        amount: 1
+      geo:
+        enabled: false
+        amount: 0
+      hydro:
+        enabled: false
+        amount: 0
+      pyro:
+        enabled: false
+        amount: 0
+      elemental:
+        enabled: false
+        amount: 0
+      lunar:
+        enabled: false
+        bonus: 0
+      stellar:
+        enabled: false
+        bonus: 0
+  vision_geo:
+    name: '<#ffcc55>Geo Vision</#ffcc55>'
+    damage-type: geo
+    elements:
+      anemo:
+        enabled: false
+        amount: 0
+      cryo:
+        enabled: false
+        amount: 0
+      dendro:
+        enabled: false
+        amount: 0
+      electro:
+        enabled: false
+        amount: 0
+      geo:
+        enabled: true
+        amount: 1
+      hydro:
+        enabled: false
+        amount: 0
+      pyro:
+        enabled: false
+        amount: 0
+      elemental:
+        enabled: false
+        amount: 0
+      lunar:
+        enabled: false
+        bonus: 0
+      stellar:
+        enabled: false
+        bonus: 0
+  vision_hydro:
+    name: '<#55bfff>Hydro Vision</#55bfff>'
+    damage-type: hydro
+    elements:
+      anemo:
+        enabled: false
+        amount: 0
+      cryo:
+        enabled: false
+        amount: 0
+      dendro:
+        enabled: false
+        amount: 0
+      electro:
+        enabled: false
+        amount: 0
+      geo:
+        enabled: false
+        amount: 0
+      hydro:
+        enabled: true
+        amount: 1
+      pyro:
+        enabled: false
+        amount: 0
+      elemental:
+        enabled: false
+        amount: 0
+      lunar:
+        enabled: false
+        bonus: 0
+      stellar:
+        enabled: false
+        bonus: 0
+  vision_pyro:
+    name: '<#ff6655>Pyro Vision</#ff6655>'
+    damage-type: pyro
+    elements:
+      anemo:
+        enabled: false
+        amount: 0
+      cryo:
+        enabled: false
+        amount: 0
+      dendro:
+        enabled: false
+        amount: 0
+      electro:
+        enabled: false
+        amount: 0
+      geo:
+        enabled: false
+        amount: 0
+      hydro:
+        enabled: false
+        amount: 0
+      pyro:
+        enabled: true
+        amount: 1
+      elemental:
+        enabled: false
+        amount: 0
+      lunar:
+        enabled: false
+        bonus: 0
+      stellar:
+        enabled: false
+        bonus: 0
+  gnosis_anemo:
+    name: '<#8ce6ff>Anemo Gnosis</#8ce6ff>'
+    damage-type: anemo
+    elements:
+      anemo:
+        enabled: true
+        amount: 10
+      cryo:
+        enabled: false
+        amount: 0
+      dendro:
+        enabled: false
+        amount: 0
+      electro:
+        enabled: false
+        amount: 0
+      geo:
+        enabled: false
+        amount: 0
+      hydro:
+        enabled: false
+        amount: 0
+      pyro:
+        enabled: false
+        amount: 0
+      elemental:
+        enabled: false
+        amount: 0
+      lunar:
+        enabled: false
+        bonus: 0
+      stellar:
+        enabled: false
+        bonus: 0
+  gnosis_cryo:
+    name: '<#9fffff>Cryo Gnosis</#9fffff>'
+    damage-type: cryo
+    elements:
+      anemo:
+        enabled: false
+        amount: 0
+      cryo:
+        enabled: true
+        amount: 10
+      dendro:
+        enabled: false
+        amount: 0
+      electro:
+        enabled: false
+        amount: 0
+      geo:
+        enabled: false
+        amount: 0
+      hydro:
+        enabled: false
+        amount: 0
+      pyro:
+        enabled: false
+        amount: 0
+      elemental:
+        enabled: false
+        amount: 0
+      lunar:
+        enabled: false
+        bonus: 0
+      stellar:
+        enabled: false
+        bonus: 0
+  gnosis_dendro:
+    name: '<#8cff8c>Dendro Gnosis</#8cff8c>'
+    damage-type: dendro
+    elements:
+      anemo:
+        enabled: false
+        amount: 0
+      cryo:
+        enabled: false
+        amount: 0
+      dendro:
+        enabled: true
+        amount: 10
+      electro:
+        enabled: false
+        amount: 0
+      geo:
+        enabled: false
+        amount: 0
+      hydro:
+        enabled: false
+        amount: 0
+      pyro:
+        enabled: false
+        amount: 0
+      elemental:
+        enabled: false
+        amount: 0
+      lunar:
+        enabled: false
+        bonus: 0
+      stellar:
+        enabled: false
+        bonus: 0
+  gnosis_electro:
+    name: '<#c88cff>Electro Gnosis</#c88cff>'
+    damage-type: electro
+    elements:
+      anemo:
+        enabled: false
+        amount: 0
+      cryo:
+        enabled: false
+        amount: 0
+      dendro:
+        enabled: false
+        amount: 0
+      electro:
+        enabled: true
+        amount: 10
+      geo:
+        enabled: false
+        amount: 0
+      hydro:
+        enabled: false
+        amount: 0
+      pyro:
+        enabled: false
+        amount: 0
+      elemental:
+        enabled: false
+        amount: 0
+      lunar:
+        enabled: false
+        bonus: 0
+      stellar:
+        enabled: false
+        bonus: 0
+  gnosis_geo:
+    name: '<#ffcc55>Geo Gnosis</#ffcc55>'
+    damage-type: geo
+    elements:
+      anemo:
+        enabled: false
+        amount: 0
+      cryo:
+        enabled: false
+        amount: 0
+      dendro:
+        enabled: false
+        amount: 0
+      electro:
+        enabled: false
+        amount: 0
+      geo:
+        enabled: true
+        amount: 10
+      hydro:
+        enabled: false
+        amount: 0
+      pyro:
+        enabled: false
+        amount: 0
+      elemental:
+        enabled: false
+        amount: 0
+      lunar:
+        enabled: false
+        bonus: 0
+      stellar:
+        enabled: false
+        bonus: 0
+  gnosis_hydro:
+    name: '<#55bfff>Hydro Gnosis</#55bfff>'
+    damage-type: hydro
+    elements:
+      anemo:
+        enabled: false
+        amount: 0
+      cryo:
+        enabled: false
+        amount: 0
+      dendro:
+        enabled: false
+        amount: 0
+      electro:
+        enabled: false
+        amount: 0
+      geo:
+        enabled: false
+        amount: 0
+      hydro:
+        enabled: true
+        amount: 10
+      pyro:
+        enabled: false
+        amount: 0
+      elemental:
+        enabled: false
+        amount: 0
+      lunar:
+        enabled: false
+        bonus: 0
+      stellar:
+        enabled: false
+        bonus: 0
+  gnosis_pyro:
+    name: '<#ff6655>Pyro Gnosis</#ff6655>'
+    damage-type: pyro
+    elements:
+      anemo:
+        enabled: false
+        amount: 0
+      cryo:
+        enabled: false
+        amount: 0
+      dendro:
+        enabled: false
+        amount: 0
+      electro:
+        enabled: false
+        amount: 0
+      geo:
+        enabled: false
+        amount: 0
+      hydro:
+        enabled: false
+        amount: 0
+      pyro:
+        enabled: true
+        amount: 10
+      elemental:
+        enabled: false
+        amount: 0
+      lunar:
+        enabled: false
+        bonus: 0
+      stellar:
+        enabled: false
+        bonus: 0

@@ -1,0 +1,60 @@
+# PlaceholderAPI expansion identifier: genshin
+# Use placeholders such as %genshin_element% and %genshin_reaction_text_bloom%.
+placeholders:
+  defaults:
+    no-element: "<reset><gray>none"
+    no-weapon-element: "<reset><gray>none"
+    no-artifact-bonus: "<reset><gray>none"
+  elements:
+    symbols:
+      hydro: "<reset><blue>🌊"
+      pyro: "<reset><red>🔥"
+      cryo: "<reset><aqua>❄"
+      electro: "<reset><dark_purple>⚡"
+      dendro: "<reset><dark_green>☘"
+      geo: "<reset><gold>₪"
+      anemo: "<reset><white>♨"
+      elemental: "<reset><gold>*"
+      lunar: "<reset><yellow>☀"
+      stellar: "<reset><dark_gray>☽"
+    texts:
+      current: "<reset><gray>Element: {symbol} <reset><white>{element} <reset><gray>x{amount}"
+      weapon: "<reset><gray>Weapon: {symbol} <reset><white>{element} <reset><gray>x{amount}"
+      artifact_bonus: "<reset><gray>Artifact bonus: <reset><white>{element} <reset><gray>+{amount}"
+      per_element:
+        hydro: "<reset><dark_aqua>Hydro {symbol} <reset><gray>x{amount}"
+        pyro: "<reset><red>Pyro {symbol} <reset><gray>x{amount}"
+        cryo: "<reset><aqua>Cryo {symbol} <reset><gray>x{amount}"
+        electro: "<reset><yellow>Electro {symbol} <reset><gray>x{amount}"
+        dendro: "<reset><dark_green>Dendro {symbol} <reset><gray>x{amount}"
+        geo: "<reset><gold>Geo {symbol} <reset><gray>x{amount}"
+        anemo: "<reset><white>Anemo {symbol} <reset><gray>x{amount}"
+  bonus_texts:
+    pyro: "<reset><gray>Permanent bonus <reset><red>Pyro: <reset><green>+{amount}"
+    hydro: "<reset><gray>Permanent bonus <reset><dark_aqua>Hydro: <reset><green>+{amount}"
+    cryo: "<reset><gray>Permanent bonus <reset><aqua>Cryo: <reset><green>+{amount}"
+    electro: "<reset><gray>Permanent bonus <reset><yellow>Electro: <reset><green>+{amount}"
+    dendro: "<reset><gray>Permanent bonus <reset><dark_green>Dendro: <reset><green>+{amount}"
+    geo: "<reset><gray>Permanent bonus <reset><gold>Geo: <reset><green>+{amount}"
+    anemo: "<reset><gray>Permanent bonus <reset><white>Anemo: <reset><green>+{amount}"
+  amounts:
+    format: "{amount}"
+  formulas:
+    default: "{pattern} <reset><gray>x{mult}"
+  reactions:
+    frozen: { pattern: "<reset><blue>Hydro <reset><gray>+ <reset><aqua>Cryo <reset><gray>= <reset><aqua>Frozen" }
+    crystallize: { pattern: "<reset><gold>Geo <reset><gray>+ (<reset><blue>Hydro|<reset><red>Pyro|<reset><aqua>Cryo|<reset><yellow>Electro) <reset><gray>= <reset><gold>Crystallize" }
+    melt: { pattern: "<reset><aqua>Cryo <reset><gray>+ <reset><red>Pyro <reset><gray>= <reset><dark_red>Melt" }
+    electrocharged: { pattern: "<reset><yellow>Electro <reset><gray>+ <reset><blue>Hydro <reset><gray>= <reset><yellow>Electro-Charged" }
+    burning: { pattern: "<reset><dark_green>Dendro <reset><gray>+ <reset><red>Pyro <reset><gray>= <reset><red>Burning" }
+    overload: { pattern: "<reset><red>Pyro <reset><gray>+ <reset><yellow>Electro <reset><gray>= <reset><dark_red>Overload" }
+    superconductor: { pattern: "<reset><aqua>Cryo <reset><gray>+ <reset><yellow>Electro <reset><gray>= <reset><white>Superconduct" }
+    swirl: { pattern: "<reset><white>Anemo <reset><gray>+ <reset><gray>(other) <reset><gray>= <reset><white>Swirl" }
+    vaporize: { pattern: "<reset><blue>Hydro <reset><gray>+ <reset><red>Pyro <reset><gray>= <reset><white>Vaporize" }
+    quicken: { pattern: "<reset><dark_green>Dendro <reset><gray>+ <reset><yellow>Electro <reset><gray>= <reset><green>Quicken" }
+    aggravate: { pattern: "<reset><green>Quicken <reset><gray>+ <reset><yellow>Electro <reset><gray>= <reset><yellow>Aggravate" }
+    spread: { pattern: "<reset><green>Quicken <reset><gray>+ <reset><dark_green>Dendro <reset><gray>= <reset><dark_green>Spread" }
+    bloom: { pattern: "<reset><dark_green>Dendro <reset><gray>+ <reset><blue>Hydro <reset><gray>= <reset><green>Bloom" }
+    hyperbloom: { pattern: "<reset><green>Bloom <reset><gray>+ <reset><yellow>Electro <reset><gray>= <reset><dark_purple>Hyperbloom" }
+    burgeon: { pattern: "<reset><green>Bloom <reset><gray>+ <reset><red>Pyro <reset><gray>= <reset><red>Burgeon" }
+    roots: { pattern: "<reset><dark_green>Dendro <reset><gray>+ <reset><gold>Geo <reset><gray>= <reset><dark_green>Roots" }

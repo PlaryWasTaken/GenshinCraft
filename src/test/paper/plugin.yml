@@ -1,0 +1,5 @@
+name: GenshinPaperSmoke
+version: '1.0'
+main: org.plary.genshin.PaperSmokePlugin
+api-version: '1.21.11'
+depend: [genshin]

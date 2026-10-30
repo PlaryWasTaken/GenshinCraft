@@ -1,0 +1,74 @@
+# Per-level elemental application bonus (MMOCore).
+# This file is read by the MMOCore per-level bonus integration. The player class
+# is resolved through the MMOCore API and can also be checked with %mmocore_class%.
+#
+# Use the class IDs exactly as returned by MMOCore, in lowercase. The configured
+# value is multiplied by the player's MMOCore level. For example, `pyro: 1.0`
+# gives +12 Pyro application at level 12. Supported elements are pyro, hydro,
+# cryo, electro, dendro, geo, and anemo. The bonus is included in
+# %genshin_element_<element>% and %genshin_bonus_element_<element>%.
+classes:
+  paladin:
+    pyro: 0.1
+    hydro: 0.1
+    cryo: 0.1
+    electro: 0.1
+    dendro: 0.5
+    geo: 1.0
+    anemo: 0.1
+  rogue:
+    electro: 0.1
+    pyro: 0.1
+    hydro: 0.1
+    cryo: 0.1
+    dendro: 0.1
+    geo: 0.1
+    anemo: 1.0
+  deidad:
+    geo: 1.0
+    pyro: 1.0
+    hydro: 1.0
+    cryo: 1.0
+    electro: 1.0
+    dendro: 1.0
+    anemo: 1.0
+  human:
+    hydro: 0.0
+    pyro: 0.0
+    cryo: 0.0
+    electro: 0.0
+    dendro: 0.0
+    geo: 0.0
+    anemo: 0.0
+  humano:
+    hydro: 0.0
+    pyro: 0.0
+    cryo: 0.0
+    electro: 0.0
+    dendro: 0.0
+    geo: 0.0
+    anemo: 0.0
+  mage:
+    cryo: 0.5
+    pyro: 0.1
+    hydro: 1.0
+    electro: 0.1
+    dendro: 0.1
+    geo: 0.1
+    anemo: 0.1
+  mago:
+    cryo: 0.1
+    pyro: 0.5
+    hydro: 0.1
+    electro: 1.0
+    dendro: 0.1
+    geo: 0.1
+    anemo: 0.1
+  warrior:
+    anemo: 0.1
+    pyro: 1.0
+    hydro: 0.1
+    cryo: 0.1
+    electro: 0.5
+    dendro: 0.1
+    geo: 0.1
