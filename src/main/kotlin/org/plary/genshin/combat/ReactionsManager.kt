@@ -3,9 +3,16 @@ package org.plary.genshin.combat
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.attribute.AttributeModifier
 import org.bukkit.Particle
 import org.bukkit.Sound
 import org.bukkit.entity.LivingEntity
+import org.bukkit.entity.BlockDisplay
+import org.bukkit.attribute.Attribute
+import org.bukkit.util.Transformation
+import org.joml.Quaternionf
+import org.joml.Vector3f
 import org.bukkit.entity.Player
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
@@ -16,11 +23,17 @@ import org.plary.genshin.util.numeric
 import java.util.UUID
 
 enum class ReactionResult { NONE, BLOCKED, TRIGGERED }
-private data class Quicken(val dendro: Int, val electro: Int, val expiresAt: Long)
+private data class Quicken(val dendro: Int, val electro: Int, val expiresAt: Long, val mastery: Double, val sourceId: UUID?)
 private data class PeriodicHit(val target: UUID, val world: UUID, val reaction: Reaction, val input: ReactionInput, val sourceId: UUID?, var remaining: Int, val interval: Long, var next: Long)
 private data class ReactionArea(val center: Location, val reaction: Reaction, val input: ReactionInput, val sourceId: UUID?, val radius: Double, val players: Boolean, val created: Long, val expiresAt: Long, val interval: Long, var next: Long, val spreadElement: Element?, val spreadAmount: Int)
 
+private data class ActiveShield(val previousAbsorption: Double, val expires: Long)
+private data class ShieldCrystal(val display: BlockDisplay, val amount: Double, val expires: Long)
+
 class ReactionsManager(private val plugin: Genshin) {
+    private val crystals = mutableListOf<ShieldCrystal>()
+    private val shields = mutableMapOf<UUID, ActiveShield>()
+    private val shieldKey = NamespacedKey(plugin, "crystallize-shield")
     private val cooldowns = Cooldowns()
     private val quicken = mutableMapOf<UUID, Quicken>()
     private val periodic = mutableListOf<PeriodicHit>()
@@ -45,13 +58,24 @@ class ReactionsManager(private val plugin: Genshin) {
 
     fun trigger(target: LivingEntity, reaction: Reaction, input: ReactionInput, sourceId: UUID?): Boolean {
         if (!ready(target, reaction) || !plugin.protection.canAffect(target, sourceId)) return false
-        if (reaction in setOf(Reaction.CRYSTALLIZE, Reaction.ROOTS) && !createArea(target, reaction, input, sourceId)) return false
+        if (reaction == Reaction.ROOTS && !createArea(target, reaction, input, sourceId)) return false
         mark(target, reaction)
         plugin.holograms.reaction(target, reaction, input)
         val cfg = plugin.config
         when (reaction) {
             Reaction.LUNAR_CRYSTALLIZE, Reaction.LUNAR_BLOOM, Reaction.LUNAR_CHARGED,
             Reaction.STELLAR_CONDUCT, Reaction.STELLAR_SWIRL -> plugin.specialReactions.trigger(target, reaction, input, sourceId)
+            Reaction.CRYSTALLIZE -> {
+                val location = target.location.clone().add(0.0, 0.5, 0.0)
+                val display = target.world.spawn(location, BlockDisplay::class.java) {
+                    plugin.markTemporary(it)
+                    it.block = Material.AMETHYST_BLOCK.createBlockData()
+                    it.transformation = Transformation(Vector3f(-0.25f, -0.25f, -0.25f), Quaternionf(), Vector3f(0.5f), Quaternionf())
+                    it.isGlowing = true
+                }
+                crystals += ShieldCrystal(display, (input.extra["attack_damage"] ?: 0.0) * org.plary.genshin.formula.DamageFormula.masteryBonus(input.extra["elemental_mastery"] ?: 0.0),
+                    plugin.ticks + cfg.getLong("parameters.crystallize.duration-ticks", 100).coerceIn(1, 1728000))
+            }
             Reaction.FREEZE -> {
                 val duration = cfg.getInt("parameters.frozen.duration-ticks", 100).coerceIn(1, 1728000)
                 target.freezeTicks = duration
@@ -83,8 +107,6 @@ class ReactionsManager(private val plugin: Genshin) {
                 val targets = (listOf(target) + plugin.protection.nearby(target.location, radius, sourceId, target is Player)).distinctBy { it.uniqueId }
                 for (entity in targets) {
                     plugin.damage.hit(entity, reaction, input, sourceId)
-                    if (reaction == Reaction.SWIRL && entity.uniqueId != target.uniqueId)
-                        plugin.elements.apply(entity, spread, amount, sourceId, adjustBonus = false, react = false)
                 }
                 if (reaction == Reaction.OVERLOAD) {
                     target.world.spawnParticle(Particle.EXPLOSION, target.location, 1)
@@ -92,7 +114,7 @@ class ReactionsManager(private val plugin: Genshin) {
                 } else plugin.particles.ring(if (reaction == Reaction.SWIRL) Element.ANEMO else Element.CRYO, target.location, radius)
             }
             Reaction.QUICKEN -> {
-                quicken[target.uniqueId] = Quicken(input.amount(Element.DENDRO), input.amount(Element.ELECTRO), plugin.ticks + cfg.getLong("parameters.quicken.duration-ticks", 200).coerceIn(1, 1728000))
+                quicken[target.uniqueId] = Quicken(input.amount(Element.DENDRO), input.amount(Element.ELECTRO), plugin.ticks + cfg.getLong("parameters.quicken.duration-ticks", 200).coerceIn(1, 1728000), input.extra["elemental_mastery"] ?: 0.0, sourceId)
                 plugin.damage.hit(target, reaction, input, sourceId)
             }
             Reaction.BLOOM -> plugin.blooms.spawn(target, input, sourceId)
@@ -101,12 +123,12 @@ class ReactionsManager(private val plugin: Genshin) {
         return true
     }
 
-    fun quickenReaction(target: LivingEntity, element: Element, amount: Int, sourceId: UUID?, modifier: ModifierState?): ReactionResult {
+    fun quickenReaction(target: LivingEntity, element: Element, amount: Int, sourceId: UUID?, modifier: ModifierState?, mastery: Double = amount.toDouble(), triggerSource: UUID? = sourceId): ReactionResult {
         val state = quicken[target.uniqueId]?.takeIf { it.expiresAt > plugin.ticks } ?: return ReactionResult.NONE
         val reaction = when (element) { Element.ELECTRO -> Reaction.AGGRAVATE; Element.DENDRO -> Reaction.SPREAD; else -> return ReactionResult.NONE }
         if (!ready(target, reaction)) return ReactionResult.BLOCKED
         val input = ReactionInput(Element.DENDRO, state.dendro, Element.ELECTRO, state.electro, modifier?.lunar ?: 0.0, modifier?.stellar ?: 0.0,
-            mapOf((if (reaction == Reaction.AGGRAVATE) "newElectro" else "newDendro") to amount.toDouble()))
+            mapOf((if (reaction == Reaction.AGGRAVATE) "new_electro" else "new_dendro") to amount.toDouble(), "elemental_mastery" to org.plary.genshin.formula.DamageFormula.reactionMastery(state.mastery, state.sourceId, mastery, triggerSource)))
         mark(target, reaction)
         quicken.remove(target.uniqueId)
         plugin.holograms.reaction(target, reaction, input)
@@ -114,8 +136,6 @@ class ReactionsManager(private val plugin: Genshin) {
         val targets = (listOf(target) + plugin.protection.nearby(target.location, plugin.config.numeric("parameters.quicken.$radiusPath", 4.0), sourceId, target is Player)).distinctBy { it.uniqueId }
         for (entity in targets) {
             plugin.damage.hit(entity, reaction, input, sourceId)
-            if (reaction == Reaction.SPREAD && entity.uniqueId != target.uniqueId)
-                plugin.elements.apply(entity, Element.DENDRO, plugin.config.getInt("parameters.quicken.apply-dendro-adjacent-amount", 1), sourceId, adjustBonus = false, react = false)
         }
         return ReactionResult.TRIGGERED
     }
@@ -136,6 +156,28 @@ class ReactionsManager(private val plugin: Genshin) {
     }
 
     fun tick() {
+        for (crystal in crystals.toList()) {
+            val display = crystal.display
+            if (!display.isValid || crystal.expires <= plugin.ticks || !display.world.isChunkLoaded(display.location.blockX shr 4, display.location.blockZ shr 4)) {
+                display.remove(); crystals.remove(crystal); continue
+            }
+            val player = display.world.getNearbyPlayers(display.location, 1.0).firstOrNull { it.isOnline && !it.isDead }
+            if (player != null) {
+                val maxAbsorption = player.getAttribute(Attribute.MAX_ABSORPTION)
+                if (maxAbsorption != null && crystal.amount > 0.0) {
+                    clearShield(player.uniqueId)
+                    maxAbsorption.addTransientModifier(AttributeModifier(shieldKey, crystal.amount, AttributeModifier.Operation.ADD_NUMBER))
+                    val previousAbsorption = player.absorptionAmount
+                    player.absorptionAmount += crystal.amount
+                    shields[player.uniqueId] = ActiveShield(previousAbsorption, plugin.ticks + plugin.config.getLong("parameters.crystallize.shield-duration-ticks", 200).coerceIn(1, 1728000))
+                }
+                display.remove(); crystals.remove(crystal)
+            }
+        }
+        shields.toMap().forEach { (id, shield) ->
+            val player = Bukkit.getPlayer(id)
+            if (player == null || player.isDead || player.absorptionAmount <= 0.0 || shield.expires <= plugin.ticks) clearShield(id)
+        }
         physicalResistanceDown.values.removeIf { it <= plugin.ticks }
         quicken.values.removeIf { it.expiresAt <= plugin.ticks }
         val due = periodic.filter { it.next <= plugin.ticks }.toList()
@@ -174,7 +216,6 @@ class ReactionsManager(private val plugin: Genshin) {
                 plugin.damage.hit(target, area.reaction, area.input, area.sourceId)
                 if (area.reaction == Reaction.ROOTS) effect(target, PotionEffectType.SLOWNESS,
                     plugin.config.getInt("parameters.roots.slowness-duration-ticks", 14), plugin.config.getInt("parameters.roots.slowness-amplifier", 1))
-                area.spreadElement?.let { plugin.elements.apply(target, it, area.spreadAmount, area.sourceId, adjustBonus = false, react = false) }
             }
         }
         if (plugin.ticks % 20L == 0L) cooldowns.cleanup(plugin.ticks)
@@ -184,6 +225,12 @@ class ReactionsManager(private val plugin: Genshin) {
         target.addPotionEffect(PotionEffect(type, ticks.coerceIn(1, 1728000), amplifier.coerceIn(0, 255), false, particles, icon))
     }
 
-    fun clear(id: UUID) { physicalResistanceDown.remove(id); quicken.remove(id); cooldowns.clear(id); periodic.removeIf { it.target == id || it.sourceId == id }; areas.removeIf { it.sourceId == id } }
-    fun clear() { physicalResistanceDown.clear(); quicken.clear(); cooldowns.clear(); periodic.clear(); areas.clear() }
+    private fun clearShield(id: UUID) {
+        val shield = shields.remove(id) ?: return
+        val player = Bukkit.getPlayer(id) ?: return
+        player.absorptionAmount = minOf(player.absorptionAmount, shield.previousAbsorption)
+        player.getAttribute(Attribute.MAX_ABSORPTION)?.removeModifier(shieldKey)
+    }
+    fun clear(id: UUID) { clearShield(id); physicalResistanceDown.remove(id); quicken.remove(id); cooldowns.clear(id); periodic.removeIf { it.target == id || it.sourceId == id }; areas.removeIf { it.sourceId == id } }
+    fun clear() { shields.keys.toList().forEach(::clearShield); crystals.forEach { it.display.remove() }; crystals.clear(); physicalResistanceDown.clear(); quicken.clear(); cooldowns.clear(); periodic.clear(); areas.clear() }
 }

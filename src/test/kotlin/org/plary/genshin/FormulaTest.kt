@@ -39,16 +39,30 @@ class FormulaTest {
 
     @Test fun `default damage uses doubles instead of overflowing integer sums`() {
         val large = ReactionInput(Element.PYRO, Int.MAX_VALUE, Element.HYDRO, Int.MAX_VALUE)
-        assertEquals(Int.MAX_VALUE.toDouble() * 4, DamageFormula.defaultDamage(Reaction.VAPORIZE, large, 2.0, 0.5))
+        assertEquals(4.0, DamageFormula.defaultDamage(Reaction.VAPORIZE, large, 2.0, 0.5))
     }
 
     @Test fun `derivatives retain original element amounts and new application`() {
         val quicken = ReactionInput(Element.DENDRO, 10, Element.ELECTRO, 20, extra = mapOf("new_electro" to 5.0, "new_dendro" to 6.0))
-        assertEquals(40.0, DamageFormula.defaultDamage(Reaction.AGGRAVATE, quicken, 2.0, 0.5))
-        assertEquals(12.0, DamageFormula.defaultDamage(Reaction.SPREAD, quicken, 2.0, 0.5))
+        assertEquals(2.0, DamageFormula.defaultDamage(Reaction.AGGRAVATE, quicken, 2.0, 0.5))
+        assertEquals(2.0, DamageFormula.defaultDamage(Reaction.SPREAD, quicken, 2.0, 0.5))
         val bloom = ReactionInput(Element.DENDRO, 10, Element.HYDRO, 20, extra = mapOf("new_electro" to 5.0))
-        assertEquals(70.0, DamageFormula.defaultDamage(Reaction.HYPERBLOOM, bloom, 2.0, 0.5))
-        assertEquals(30.0, DamageFormula.defaultDamage(Reaction.CRYSTALLIZE, bloom, 2.0, 0.5))
+        assertEquals(4.0, DamageFormula.defaultDamage(Reaction.HYPERBLOOM, bloom, 2.0, 0.5))
+        assertEquals(2.0, DamageFormula.defaultDamage(Reaction.CRYSTALLIZE, bloom, 2.0, 0.5))
+    }
+
+    @Test fun `mastery has bounded diminishing returns`() {
+        assertEquals(1.0, DamageFormula.masteryBonus(0.0))
+        assertEquals(1.0 + 100.0 / 1150.0, DamageFormula.masteryBonus(100.0), 1e-9)
+        assertTrue(DamageFormula.masteryBonus(100000.0) < 2.0)
+    }
+
+    @Test fun `reaction mastery uses snapshots and prevents switching abuse`() {
+        val first = java.util.UUID.randomUUID()
+        val second = java.util.UUID.randomUUID()
+        assertEquals(1.0, DamageFormula.reactionMastery(1.0, first, 100.0, first))
+        assertEquals(100.0, DamageFormula.reactionMastery(1.0, first, 100.0, second))
+        assertEquals(1.0, DamageFormula.reactionMastery(1.0, first, 0.0, null))
     }
 
     @Test fun `the strongest celestial modifier wins with lunar winning ties`() {

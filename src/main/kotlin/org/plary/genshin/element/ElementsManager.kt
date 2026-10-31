@@ -9,7 +9,7 @@ import org.plary.genshin.combat.ReactionResult
 import org.plary.genshin.formula.ReactionInput
 import java.util.UUID
 
-data class ElementState(val element: Element, val amount: Int, val expiresAt: Long, val sourceId: UUID?)
+data class ElementState(val element: Element, val amount: Int, val expiresAt: Long, val sourceId: UUID?, val mastery: Double = 0.0)
 data class ModifierState(val lunar: Double, val stellar: Double, val expiresAt: Long)
 
 class ElementsManager(private val plugin: Genshin) {
@@ -31,6 +31,8 @@ class ElementsManager(private val plugin: Genshin) {
         lunar: Double = 0.0,
         stellar: Double = 0.0,
         react: Boolean = true,
+        attackDamage: Double = 0.0,
+        mastery: Double? = null,
     ): Boolean {
         if (baseAmount <= 0 || (duration != null && duration <= 0)) return false
         val source = sourceId?.let(Bukkit::getEntity) as? LivingEntity
@@ -39,7 +41,7 @@ class ElementsManager(private val plugin: Genshin) {
         val element = if (randomWeapon) Element.base.random() else requested
         if (plugin.blooms.isCore(target.uniqueId)) {
             val amount = if (adjustBonus && source is Player) plugin.equipment.total(source, element, baseAmount, randomWeapon) else baseAmount
-            val activated = plugin.blooms.activate(target.uniqueId, element, amount, sourceId)
+            val activated = plugin.blooms.activate(target.uniqueId, element, amount, sourceId, mastery ?: if (ambient) 0.0 else amount.toDouble())
             if (activated && randomWeapon && sourceId != null) markRandomWeapon(sourceId)
             return activated
         }
@@ -54,11 +56,12 @@ class ElementsManager(private val plugin: Genshin) {
         if (target is Player && plugin.equipment.blocks(target, element, ambient)) return false
         val amount = if (adjustBonus && source is Player) plugin.equipment.total(source, element, baseAmount, randomWeapon) else baseAmount
         if (amount <= 0) return false
+        val currentMastery = (mastery ?: if (ambient) 0.0 else amount.toDouble()).coerceIn(0.0, 1_000_000.0)
         val oldModifier = modifier(id)
         val incomingModifier = if (lunar > 0 || stellar > 0) ModifierState(lunar, stellar,
             now + plugin.config.getLong(if (lunar >= stellar) "states.lunar" else "states.stellar", 100).coerceIn(1, 1728000)) else oldModifier
         val effectiveSource = sourceId ?: previous?.sourceId
-        val derivative = if (react) plugin.reactions.quickenReaction(target, element, amount, effectiveSource, incomingModifier) else ReactionResult.NONE
+        val derivative = if (react) plugin.reactions.quickenReaction(target, element, amount, effectiveSource, incomingModifier, currentMastery, sourceId) else ReactionResult.NONE
         if (derivative == ReactionResult.BLOCKED) return false
         if (derivative == ReactionResult.TRIGGERED) {
             clearState(id)
@@ -69,7 +72,9 @@ class ElementsManager(private val plugin: Genshin) {
             if (react && reaction != null) {
                 val input = ReactionInput(previous.element, previous.amount, element, amount,
                     if (reaction.name.startsWith("LUNAR_")) incomingModifier?.lunar ?: 0.0 else 0.0,
-                    if (reaction.name.startsWith("STELLAR_")) incomingModifier?.stellar ?: 0.0 else 0.0)
+                    if (reaction.name.startsWith("STELLAR_")) incomingModifier?.stellar ?: 0.0 else 0.0,
+                    mapOf("attack_damage" to attackDamage.coerceAtLeast(0.0),
+                        "elemental_mastery" to org.plary.genshin.formula.DamageFormula.reactionMastery(previous.mastery, previous.sourceId, currentMastery, sourceId)))
                 if (!plugin.reactions.trigger(target, reaction, input, effectiveSource)) return false
                 clearState(id)
                 modifiers.remove(id)
@@ -80,14 +85,14 @@ class ElementsManager(private val plugin: Genshin) {
             }
         } else {
             val ticks = (duration ?: plugin.config.getLong("states.${element.key}", 100)).coerceIn(1, 1728000)
-            states[id] = ElementState(element, amount, now + ticks, sourceId)
+            states[id] = ElementState(element, amount, now + ticks, sourceId, currentMastery)
             if (incomingModifier != null) modifiers[id] = incomingModifier
             plugin.holograms.state(target)
             plugin.particles.burst(element, target.location.add(0.0, target.height * 0.5, 0.0), 8)
         }
         cooldowns.mark(id, "apply-${element.key}", now, plugin.config.getLong("elements.apply-cooldown-ticks", 40).coerceIn(0, 1728000))
         if (randomWeapon && sourceId != null) markRandomWeapon(sourceId)
-        plugin.holograms.application(target, element, amount)
+        if (!ambient || previous?.element != element) plugin.holograms.application(target, element, amount)
         if (!ambient && plugin.config.getBoolean("weapons-element-logs", false)) plugin.logger.info("${source?.name ?: "Environment/console"} applied ${element.key} x$amount to ${target.name}.")
         return true
     }

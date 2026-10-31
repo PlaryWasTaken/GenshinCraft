@@ -96,6 +96,15 @@ class Holograms(private val plugin: Genshin) {
         floating(target.location.add(0.0, target.height + 0.2, 0.0), text, 25, rise = 0.035)
     }
 
+    fun damage(target: LivingEntity, type: Element?, amount: Double) {
+        if (!plugin.config.getBoolean("holograms.damage.enabled", true)) return
+        val decimals = plugin.config.getInt("holograms.damage.decimals", 1).coerceIn(0, 6)
+        val formatted = String.format(Locale.ROOT, "%.${decimals}f", amount)
+        val key = type?.key ?: "physical"
+        val template = plugin.config.getString("holograms.damage.formats.$key", "&f-{amount}")!!
+        floating(target.location.add(0.0, target.height + 0.2, 0.0), template.replace("{amount}", formatted).replace("{type}", key), 25, rise = 0.035)
+    }
+
     fun application(target: LivingEntity, element: Element, amount: Int) {
         val cfg = plugin.config
         if (!cfg.getBoolean("application_holograms.enabled", true)) return

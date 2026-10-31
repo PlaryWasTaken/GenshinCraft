@@ -31,6 +31,18 @@ action-bars:
 
 
 holograms:
+  damage:
+    enabled: true
+    decimals: 1
+    formats:
+      physical: "&f-{amount}"
+      pyro: "&c-{amount}"
+      hydro: "&9-{amount}"
+      cryo: "&b-{amount}"
+      electro: "&d-{amount}"
+      dendro: "&a-{amount}"
+      geo: "&6-{amount}"
+      anemo: "&f-{amount}"
 
   optimize:
     enabled: true
@@ -162,6 +174,8 @@ holograms:
 
 
 formulas:
+  # Custom formulas keep legacy amount variables and expose elemental_mastery.
+  # The mastery bonus is applied after the configured formula.
   ModifyFormulas: false
 
 
@@ -231,15 +245,18 @@ damage:
 
 parameters:
   lunar-crystallize:
+    damage-scale: 0.25
     duration-ticks: 100
     interval-ticks: 20
   lunar-bloom:
     duration-ticks: 200
     heal: 6.0
   lunar-charged:
+    damage-scale: 0.25
     duration-ticks: 100
     interval-ticks: 20
   stellar-conduct:
+    damage-scale: 0.25
     duration-ticks: 100
     interval-ticks: 20
     radius: 4.0
@@ -272,6 +289,8 @@ parameters:
     amount: 6
     life-ticks: 60
   crystallize:
+
+    shield-duration-ticks: 200
 
     duration-ticks: 100
 
@@ -502,15 +521,15 @@ aplying-other-elements-single-player: true
 
 application_holograms:
   enabled: true
-  format: "{symbol} <reset><white>{element} <reset><gray>x{amount}"
+  format: "{symbol} <reset><white>{element}"
   formats:
-    hydro: "<reset><blue>🌊 <reset><dark_aqua>Hydro <reset><white>x{amount}"
-    pyro: "<reset><red>🔥 <reset><red>Pyro <reset><white>x{amount}"
-    cryo: "<reset><aqua>❄ <reset><aqua>Cryo <reset><white>x{amount}"
-    electro: "<reset><dark_purple>⚡ <reset><dark_purple>Electro <reset><white>x{amount}"
-    dendro: "<reset><dark_green>☘ <reset><dark_green>Dendro <reset><white>x{amount}"
-    geo: "<reset><gold>₪ <reset><gold>Geo <reset><white>x{amount}"
-    anemo: "<reset><white>♨ <reset><white>Anemo <reset><white>x{amount}"
+    hydro: "<reset><blue>🌊 <reset><dark_aqua>Hydro"
+    pyro: "<reset><red>🔥 <reset><red>Pyro"
+    cryo: "<reset><aqua>❄ <reset><aqua>Cryo"
+    electro: "<reset><dark_purple>⚡ <reset><dark_purple>Electro"
+    dendro: "<reset><dark_green>☘ <reset><dark_green>Dendro"
+    geo: "<reset><gold>₪ <reset><gold>Geo"
+    anemo: "<reset><white>♨ <reset><white>Anemo"
   y-offset: 1.0
   small: true
   up-per-tick: 0.045

@@ -82,6 +82,41 @@ class PaperSmokePlugin : JavaPlugin(), Listener {
             cfg.set("reactions.multipliers.vaporize-players", 0.5)
             cfg.set("states.lunar-multiplier", 1.0)
 
+            verify("configured items display mastery and glow on Paper") {
+                val fixture = org.bukkit.configuration.file.YamlConfiguration()
+                for ((id, mastery) in listOf("vision_pyro" to 1, "gnosis_pyro" to 100)) {
+                    fixture.set("items.$id.name", id)
+                    fixture.set("items.$id.material", "BLAZE_ROD")
+                    fixture.set("items.$id.item-type", "pyro")
+                    fixture.set("items.$id.item-property", "weapon")
+                    fixture.set("items.$id.damage", 6.0)
+                    fixture.set("items.$id.elemental-mastery", mastery)
+                }
+                genshin.items.load(fixture)
+                val vision = genshin.items.create("vision_pyro")
+                val gnosis = genshin.items.create("gnosis_pyro")
+                check(vision.type == org.bukkit.Material.BLAZE_ROD)
+                check(!vision.itemMeta.hasEnchantmentGlintOverride())
+                check(gnosis.itemMeta.enchantmentGlintOverride == true)
+                check(gnosis.enchantments.isEmpty())
+                val serializer = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+                check(gnosis.itemMeta.lore()!!.any { serializer.serialize(it) == "Elemental Mastery: 100" })
+            }
+
+            @Suppress("DEPRECATION")
+            verify("configured weapon sets base damage on a Paper damage event") {
+                val target = mob()
+                val attacker = target.world.spawn(target.location.clone().add(2.0, 0.0, 0.0), org.bukkit.entity.Zombie::class.java)
+                attacker.setAI(false)
+                attacker.setGravity(false)
+                spawned += attacker
+                attacker.equipment!!.setItemInMainHand(genshin.items.create("gnosis_pyro"))
+                val hit = org.bukkit.event.entity.EntityDamageByEntityEvent(attacker, target,
+                    EntityDamageEvent.DamageCause.ENTITY_ATTACK, 2.0)
+                server.pluginManager.callEvent(hit)
+                check(kotlin.math.abs(hit.damage - 6.0) < 1e-9)
+            }
+
             verify("lunar crystallize creates three displays and fires") {
                 val target = mob()
                 val before = target.world.entities.count { genshin.isTemporary(it) }
@@ -129,10 +164,10 @@ class PaperSmokePlugin : JavaPlugin(), Listener {
                 check(target.noDamageTicks == 20)
             }
 
-            verify("delayed areas retain formula inputs") {
+            verify("Crystallize does not deal reaction damage") {
                 val target = mob()
                 apply(target, Element.GEO, 2); apply(target, Element.HYDRO, 9)
-                deferred += "delayed Crystallize formula" to { check(target.health == 980.0) { "Expected health 980, got ${target.health}" } }
+                deferred += "Crystallize leaves target health unchanged" to { check(target.health == 1000.0) { "Expected health 1000, got ${target.health}" } }
             }
 
             verify("Aggravate and Spread damage the triggering target") {
@@ -176,8 +211,8 @@ class PaperSmokePlugin : JavaPlugin(), Listener {
 
             verify("player damage multiplier and celestial formulas stay consistent") {
                 val input = ReactionInput(Element.PYRO, 10, Element.HYDRO, 10, lunar = 20.0)
-                check(genshin.damage.calculate(Reaction.VAPORIZE, input, true) == 12.0)
-                check(genshin.damage.calculate(Reaction.VAPORIZE, input, false) == 36.0)
+                check(kotlin.math.abs(genshin.damage.calculate(Reaction.VAPORIZE, input, true) - 1.2) < 1e-9)
+                check(kotlin.math.abs(genshin.damage.calculate(Reaction.VAPORIZE, input, false) - 3.6) < 1e-9)
             }
         } catch (ex: Throwable) { failure = true; logger.log(Level.SEVERE, "Smoke setup failed", ex) }
         server.scheduler.runTaskLater(this, Runnable { finish() }, 50)

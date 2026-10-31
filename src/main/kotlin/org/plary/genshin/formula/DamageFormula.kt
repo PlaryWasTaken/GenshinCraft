@@ -25,19 +25,32 @@ object DamageFormula {
         put("a", input.amountA.toDouble()); put("b", input.amountB.toDouble())
         put("amount_a", input.amountA.toDouble()); put("amount_b", input.amountB.toDouble())
         put("sum", input.amountA.toDouble() + input.amountB)
+        put("elemental_mastery", input.extra["elemental_mastery"] ?: 0.0)
         put("multiplier", multiplier); put("pulse_multiplier", pulse)
         putAll(input.extra)
     }
 
     fun defaultDamage(reaction: Reaction, input: ReactionInput, multiplier: Double, pulse: Double): Double {
-        val sum = input.amountA.toDouble() + input.amountB
-        return when (reaction) {
-            Reaction.AGGRAVATE -> sum + (input.extra["new_electro"] ?: 0.0) * multiplier
-            Reaction.SPREAD -> (input.extra["new_dendro"] ?: 0.0) * multiplier
-            Reaction.HYPERBLOOM -> (sum + (input.extra["new_electro"] ?: 0.0)) * multiplier
-            Reaction.CRYSTALLIZE -> sum * pulse * multiplier
-            else -> sum * multiplier
-        }.coerceAtLeast(0.0)
+        // Element amounts are legacy mastery values, not a damage multiplier.
+        val base = when (reaction) {
+            Reaction.CRYSTALLIZE -> 2.0 * pulse
+            Reaction.AGGRAVATE, Reaction.SPREAD -> 1.0
+            else -> 2.0
+        }
+        return (base * multiplier).coerceAtLeast(0.0)
+    }
+
+    fun reactionMastery(auraMastery: Double, auraSource: java.util.UUID?, incomingMastery: Double, incomingSource: java.util.UUID?): Double =
+        when {
+            incomingSource == null -> auraMastery
+            incomingSource == auraSource -> minOf(auraMastery, incomingMastery)
+            else -> incomingMastery
+        }.coerceIn(0.0, 1_000_000.0)
+
+    /** Diminishing returns; 100 mastery gives about 8.5% reaction damage. */
+    fun masteryBonus(mastery: Double): Double {
+        val em = if (mastery.isFinite()) mastery.coerceIn(0.0, 1_000_000.0) else 0.0
+        return 1.0 + em / (em + 1050.0)
     }
 
     fun modifier(input: ReactionInput, lunarMultiplier: Double, stellarMultiplier: Double): Double = when {

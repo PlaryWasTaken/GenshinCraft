@@ -47,7 +47,7 @@ class GenshinCommand(private val plugin: Genshin) : CommandExecutor, TabComplete
                 "reload" -> { plugin.reloadAll(); reply(sender, "&aGenshin configuration reloaded.") }
                 "register" -> {
                     val id = plugin.items.register(player(sender).inventory.itemInMainHand)
-                    reply(sender, "&aRegistered as &f$id&a. Enable an element in items.yml, then run /$label reload.")
+                    reply(sender, "&aRegistered as &f$id&a. Set its item type, property, damage and mastery in items.yml, then run /$label reload.")
                 }
                 "element" -> {
                     require(args.size == 5) { "Usage: /$label element <player> <element> <amount> <time: 10s|100t>" }
@@ -57,9 +57,9 @@ class GenshinCommand(private val plugin: Genshin) : CommandExecutor, TabComplete
                 }
                 "putelement" -> putElement(sender, args, label)
                 "give" -> {
-                    require(args.size in 3..4) { "Usage: /$label give <itemId> <itemType> [player]" }
-                    val target = args.getOrNull(3)?.let(::online) ?: player(sender)
-                    val item = plugin.items.create(args[1], args[2])
+                    require(args.size in 2..3) { "Usage: /$label give <itemId> [player]" }
+                    val target = args.getOrNull(2)?.let(::online) ?: player(sender)
+                    val item = plugin.items.create(args[1])
                     target.inventory.addItem(item).values.forEach { target.world.dropItemNaturally(target.location, it) }
                     reply(sender, "&aGave ${args[1]} to ${target.name}.")
                 }
@@ -167,7 +167,7 @@ class GenshinCommand(private val plugin: Genshin) : CommandExecutor, TabComplete
             args.size == 1 -> permissions.keys.filter { allowed(sender, it) }
             sub == "element" -> when (args.size) { 2 -> players; 3 -> elements; 4 -> listOf("1", "5", "10"); 5 -> listOf("5s", "10s", "100t"); else -> emptyList() }
             sub == "putelement" -> when (args.size) { 2 -> elements; 3 -> listOf("target", "area", "coneinfrontme"); 4 -> listOf("3", "6", "12"); 5 -> listOf("entities", "player"); 6 -> listOf("1", "5", "10"); else -> emptyList() }
-            sub == "give" -> when (args.size) { 2 -> plugin.items.definitions.keys.toList(); 3 -> listOf("sword", "bow", "axe", "trident", "staff"); 4 -> players; else -> emptyList() }
+            sub == "give" -> when (args.size) { 2 -> plugin.items.definitions.keys.toList(); 3 -> players; else -> emptyList() }
             sub == "removeholo" && args.size == 2 -> listOf("8", "16", "32", "64")
             sub == "bonuselement" -> when (args.size) { 2 -> elements; 3 -> listOf("1.0", "1.25", "1.5", "2.0"); 4 -> players + "players"; 5 -> if (args[3].equals("player", true)) players else listOf("10", "30s", "60s"); 6 -> listOf("30s", "60s", "120s"); else -> emptyList() }
             else -> emptyList()

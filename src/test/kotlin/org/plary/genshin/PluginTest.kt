@@ -34,33 +34,83 @@ class PluginTest {
     @Test fun `starts without any optional plugins and loads configured weapons`() {
         assertTrue(plugin.isEnabled)
         assertTrue(plugin.items.definitions.isNotEmpty())
-        val weapon = plugin.items.weapon(plugin.items.create("example_fire_sword", "sword"))
-        assertEquals(Element.PYRO, weapon?.element)
-        assertEquals(10, weapon?.amount)
+        val weapon = plugin.items.weapon(plugin.items.create("lunar_hydro"))
+        assertEquals(Element.HYDRO, weapon?.element)
+        assertEquals(1, weapon?.amount)
         assertNotNull(plugin.getCommand("genshin"))
     }
 
-    @Test fun `damage type is independent of elemental application`() {
-        val elemental = plugin.items.weapon(plugin.items.create("example_sacred_lunar_fire_sword", "sword"))!!
-        val physical = plugin.items.weapon(plugin.items.create("example_fire_sword", "sword"))!!
-        assertEquals(Element.PYRO, elemental.damageType)
-        assertNull(physical.damageType)
-        plugin.config.set("damage.resistance.pyro", 0.25)
+    @Test fun `elemental and physical resistance are independent`() {
+        val elemental = plugin.items.weapon(plugin.items.create("lunar_hydro"))!!
+        assertEquals(Element.HYDRO, elemental.damageType)
+        plugin.config.set("damage.resistance.hydro", 0.25)
         assertEquals(0.75, plugin.damage.resistanceMultiplier(elemental.damageType))
-        assertEquals(1.0, plugin.damage.resistanceMultiplier(physical.damageType))
+        assertEquals(1.0, plugin.damage.resistanceMultiplier(null))
     }
 
-    @Test fun `registration produces real element paths and survives reload`() {
+    @Test fun `configured material and mastery determine lore and glow`() {
+        val config = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "items.yml"))
+        config.set("items.vision_pyro.material", "BOW")
+        config.set("items.vision_pyro.lore", listOf("&aCustom description"))
+        config.set("items.vision_pyro.elemental-mastery", 50)
+        plugin.items.load(config)
+        val item = plugin.items.create("vision_pyro")
+        assertEquals(Material.BOW, item.type)
+        val lore = item.itemMeta.lore()!!
+        val serializer = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+        assertEquals(listOf("Custom description", "Elemental Mastery: 50"), lore.map(serializer::serialize))
+        assertFalse(item.itemMeta.hasEnchantmentGlintOverride())
+        assertTrue(item.enchantments.isEmpty())
+        config.set("items.vision_pyro.elemental-mastery", 51)
+        plugin.items.load(config)
+        val glowing = plugin.items.create("vision_pyro")
+        assertEquals(true, glowing.itemMeta.enchantmentGlintOverride)
+        assertTrue(glowing.enchantments.isEmpty())
+    }
+
+    @Test fun `give command uses configured material for self and named recipient`() {
+        val sender = server.addPlayer().apply { isOp = true }
+        val recipient = server.addPlayer()
+        assertTrue(server.dispatchCommand(sender, "genshin give vision_pyro"))
+        assertEquals(Material.BLAZE_ROD, sender.inventory.contents.filterNotNull().single().type)
+        assertTrue(server.dispatchCommand(sender, "genshin give gnosis_pyro ${recipient.name}"))
+        val received = recipient.inventory.contents.filterNotNull().single()
+        assertEquals(Material.BLAZE_ROD, received.type)
+        assertEquals(true, received.itemMeta.enchantmentGlintOverride)
+        assertNull(plugin.items.weapon(received))
+    }
+
+    @Test fun `registration uses simplified item properties and survives reload`() {
         val item = ItemStack(Material.STICK).apply { editMeta { it.displayName(component("&dTest item")) } }
         val id = plugin.items.register(item)
         val config = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "items.yml"))
-        assertTrue(config.contains("items.$id.elements.pyro.enabled"))
-        config.set("items.$id.elements.pyro.enabled", true)
-        config.set("items.$id.elements.pyro.amount", 7)
+        assertFalse(config.contains("items.$id.elements"))
+        assertTrue(config.contains("items.$id.lunar.enabled"))
+        assertEquals("STICK", config.getString("items.$id.material"))
+        assertEquals(Material.STICK, plugin.items.create(id).type)
+        config.set("items.$id.item-type", "pyro")
+        config.set("items.$id.elemental-mastery", 7)
         config.save(File(plugin.dataFolder, "items.yml"))
         plugin.reloadAll()
         assertEquals(7, plugin.items.weapon(item)?.amount)
         assertEquals(Element.PYRO, plugin.items.weapon(item)?.element)
+    }
+
+    @Test fun `item type and property control damage and modifiers`() {
+        val config = YamlConfiguration()
+        config.set("items.example.name", "Example")
+        config.set("items.example.item-type", "pyro")
+        config.set("items.example.item-property", "weapon")
+        config.set("items.example.damage", 9.0)
+        config.set("items.example.elemental-mastery", 42)
+        config.set("items.example.stellar.enabled", true)
+        config.set("items.example.stellar.bonus", 15)
+        plugin.items.load(config)
+        val weapon = plugin.items.weapon(plugin.items.create("example"))!!
+        assertEquals(Element.PYRO, weapon.element)
+        assertEquals(42, weapon.amount)
+        assertEquals(9.0, weapon.baseDamage)
+        assertEquals(15.0, weapon.stellar)
     }
 
     @Test fun `invalid YAML leaves the running configuration intact`() {
@@ -68,7 +118,7 @@ class PluginTest {
         File(plugin.dataFolder, "config.yml").writeText("states: [broken")
         assertFails { plugin.reloadAll() }
         assertEquals(original, plugin.config.getLong("states.pyro"))
-        assertEquals(10, plugin.items.definitions["example_fire_sword"]?.weapon?.amount)
+        assertEquals(100, plugin.items.definitions["gnosis_pyro"]?.mastery)
     }
 
     @Test fun `slot effects follow the configured slot and live equipment`() {
@@ -93,12 +143,12 @@ class PluginTest {
 
     @Test fun `exact placeholders remain reachable before prefix handlers`() {
         val player = server.addPlayer()
-        player.inventory.setItemInMainHand(plugin.items.create("example_fire_sword", "sword"))
+        player.inventory.setItemInMainHand(plugin.items.create("lunar_hydro"))
         val expansion = GenshinExpansion(plugin)
-        assertEquals("pyro", expansion.onRequest(player, "element"))
-        assertEquals("10", expansion.onRequest(player, "element_amount"))
-        assertTrue(expansion.onRequest(player, "element_symbol")!!.contains("🔥"))
-        assertTrue(expansion.onRequest(player, "element_text")!!.contains("pyro"))
+        assertEquals("hydro", expansion.onRequest(player, "element"))
+        assertEquals("1", expansion.onRequest(player, "element_amount"))
+        assertTrue(expansion.onRequest(player, "element_symbol")!!.isNotBlank())
+        assertTrue(expansion.onRequest(player, "element_text")!!.contains("hydro"))
         assertEquals("1.5", expansion.onRequest(null, "reaction_mult_vaporize"))
     }
 
@@ -126,6 +176,7 @@ class PluginTest {
     }
 
     private fun target(): Cow {
+        plugin.config.set("holograms.damage.enabled", false)
         plugin.config.set("holograms.state.enabled", false)
         plugin.config.set("holograms.reaction.enabled", false)
         plugin.config.set("application_holograms.enabled", false)
@@ -158,22 +209,76 @@ class PluginTest {
     }
 
     @Suppress("DEPRECATION")
+    @Test fun `vision infuses a configured weapon and preserves its base damage`() {
+        val target = target()
+        val player = server.addPlayer()
+        player.teleport(target.location)
+        val config = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "items.yml"))
+        config.set("items.lunar_hydro.item-type", "physical")
+        config.set("items.lunar_hydro.damage", 8.0)
+        plugin.items.load(config)
+        player.inventory.setItemInMainHand(plugin.items.create("lunar_hydro"))
+        player.inventory.setItem(5, plugin.items.create("vision_pyro"))
+        plugin.config.set("damage.resistance.pyro", 0.25)
+        val hit = EntityDamageByEntityEvent(player, target, DamageCause.ENTITY_ATTACK, 2.0)
+        server.pluginManager.callEvent(hit)
+        assertEquals(6.0, hit.damage, 1e-9)
+        server.scheduler.performTicks(1)
+        assertEquals(Element.PYRO, plugin.elements.state(target.uniqueId)?.element)
+        assertEquals(1.0, plugin.elements.state(target.uniqueId)?.mastery)
+    }
+
+    @Test fun `vision applies to vanilla weapons in inventory order and not to other items`() {
+        val player = server.addPlayer()
+        player.inventory.setItem(4, plugin.items.create("vision_pyro"))
+        player.inventory.setItem(5, plugin.items.create("gnosis_hydro"))
+        val sword = ItemStack(Material.IRON_SWORD)
+        val infused = plugin.items.attack(player, sword)!!
+        assertEquals(Element.PYRO, infused.damageType)
+        assertNull(infused.baseDamage)
+        assertNull(plugin.items.attack(player, ItemStack(Material.STICK)))
+        assertNull(plugin.items.attack(player, plugin.items.create("vision_pyro")))
+        player.inventory.setItem(4, null)
+        assertEquals(Element.HYDRO, plugin.items.attack(player, sword)?.damageType)
+        assertEquals(100, plugin.items.attack(player, sword)?.amount)
+    }
+
+    @Suppress("DEPRECATION")
+    @Test fun `physical attacks do not apply the enabled element`() {
+        val target = target()
+        val player = server.addPlayer()
+        player.teleport(target.location)
+        val config = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "items.yml"))
+        config.set("items.lunar_hydro.item-type", "physical")
+        plugin.items.load(config)
+        player.inventory.setItemInMainHand(plugin.items.create("lunar_hydro"))
+        server.pluginManager.callEvent(EntityDamageByEntityEvent(player, target, DamageCause.ENTITY_ATTACK, 1.0))
+        server.scheduler.performTicks(1)
+        assertNull(plugin.elements.state(target.uniqueId))
+    }
+
+    @Suppress("DEPRECATION")
     @Test fun `offhand arrows keep their launch element and bonus after equipment changes`() {
         val target = target()
         val player = server.addPlayer()
         player.teleport(target.location)
-        val bow = plugin.items.create("example_fire_sword", "bow")
+        val config = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "items.yml"))
+        config.set("items.lunar_hydro.material", "BOW")
+        plugin.items.load(config)
+        val bow = plugin.items.create("lunar_hydro")
+        player.inventory.setItem(5, plugin.items.create("gnosis_pyro"))
         player.inventory.setItemInOffHand(bow)
         plugin.equipment.addTemporary(player, Element.PYRO, 2.0, 100)
         val arrow = target.world.spawnEntity(player.location, EntityType.ARROW) as Arrow
         arrow.shooter = player
         server.pluginManager.callEvent(EntityShootBowEvent(player, bow, ItemStack(Material.ARROW), arrow, EquipmentSlot.OFF_HAND, 1f, true))
         player.inventory.setItemInOffHand(ItemStack(Material.AIR))
+        player.inventory.setItem(5, null)
         player.inventory.setItemInMainHand(ItemStack(Material.STICK))
         plugin.equipment.clear(player.uniqueId)
         server.pluginManager.callEvent(EntityDamageByEntityEvent(arrow, target, DamageCause.PROJECTILE, 1.0))
         server.scheduler.performTicks(1)
         assertEquals(Element.PYRO, plugin.elements.state(target.uniqueId)?.element)
-        assertEquals(20, plugin.elements.state(target.uniqueId)?.amount)
+        assertEquals(200, plugin.elements.state(target.uniqueId)?.amount)
     }
 }

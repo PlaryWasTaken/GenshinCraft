@@ -61,7 +61,7 @@ class BloomManager(private val plugin: Genshin) {
         cores[core.uniqueId] = BloomCore(core, visual, hologram, input, sourceId, target.uniqueId, plugin.ticks + duration)
     }
 
-    fun activate(id: UUID, element: Element, amount: Int, sourceId: UUID?): Boolean {
+    fun activate(id: UUID, element: Element, amount: Int, sourceId: UUID?, mastery: Double = amount.toDouble()): Boolean {
         val seed = cores[id] ?: return false
         if (element !in setOf(Element.PYRO, Element.ELECTRO) || amount <= 0) return false
         val source = sourceId ?: seed.sourceId
@@ -70,9 +70,11 @@ class BloomManager(private val plugin: Genshin) {
         if (preferred != null && !plugin.protection.canAffect(preferred, source)) return false
         val reaction = if (element == Element.ELECTRO) Reaction.HYPERBLOOM else Reaction.BURGEON
         plugin.holograms.reaction(seed.core, reaction, seed.input, follow = false)
-        if (element == Element.PYRO) explode(seed, Reaction.BURGEON, source)
+        val reactionMastery = org.plary.genshin.formula.DamageFormula.reactionMastery(seed.input.extra["elemental_mastery"] ?: 0.0, seed.sourceId, mastery, sourceId)
+        val activated = seed.copy(input = seed.input.copy(extra = seed.input.extra + ("elemental_mastery" to reactionMastery)))
+        if (element == Element.PYRO) explode(activated, Reaction.BURGEON, source)
         else {
-            val input = seed.input.copy(extra = seed.input.extra + mapOf(
+            val input = activated.input.copy(extra = activated.input.extra + mapOf(
                 "new_electro" to amount.toDouble(), "electro" to amount.toDouble(), "amount_electro" to amount.toDouble(),
                 "sum" to (seed.input.amountA.toDouble() + seed.input.amountB + amount)))
             repeat(plugin.config.getInt("parameters.bloom.projectiles", 2).coerceIn(1, 32)) { index ->

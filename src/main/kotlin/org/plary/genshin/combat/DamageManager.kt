@@ -37,8 +37,11 @@ class DamageManager(private val plugin: Genshin) {
                 if (invalidFormulas.add("${reaction.key}:$formula")) plugin.logger.warning("Invalid ${reaction.key} formula: ${ex.message}. Using default damage.")
             }
         }
+        result *= DamageFormula.masteryBonus(input.extra["elemental_mastery"] ?: 0.0)
         result *= DamageFormula.modifier(input, plugin.config.numeric("states.lunar-multiplier", 1.0), plugin.config.numeric("states.stellar-multiplier", 1.0))
         result *= input.extra["special_scale"] ?: 1.0
+        if (reaction in setOf(Reaction.LUNAR_CRYSTALLIZE, Reaction.LUNAR_CHARGED, Reaction.STELLAR_CONDUCT))
+            result *= plugin.config.numeric("parameters.${reaction.key}.damage-scale", 0.25).coerceAtLeast(0.0)
         return result.takeIf(Double::isFinite)?.coerceAtLeast(0.0) ?: 0.0
     }
 
