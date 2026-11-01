@@ -31,7 +31,7 @@ The shaded `-all.jar` includes Kotlin. Do not install the plain JAR by itself.
 
 ## Commands and permissions
 
-The main command is `/genshin`, with `/tg` as an alias. Administrative permissions default to operators; status commands are available to everyone by default.
+The main command is `/genshin`, with `/tg` as an alias. Administrative permissions default to operators; status and weapon effect commands are available to everyone by default.
 
 | Command | Permission | Description |
 | --- | --- | --- |
@@ -41,6 +41,7 @@ The main command is `/genshin`, with `/tg` as an alias. Administrative permissio
 | `/genshin element <player> <element> <amount> <duration>` | `genshin.element` | Apply an element to an online player. |
 | `/genshin putelement <element> <target\|area\|coneinfrontme> <range> <entities\|player> [amount]` | `genshin.putelement` | Apply an element from the command sender. |
 | `/genshin bonuselement <element> <multiplier> <playerName\|players> [duration]` | `genshin.bonuselement` | Grant a temporary elemental multiplier. |
+| `/genshin weaponeffect [on\|off]` | `genshin.weaponeffect` | Toggle your weapon infusion particles. |
 | `/genshin armorstatus` | `genshin.armorstatus` | Show active armor effects. |
 | `/genshin artifactstatus` | `genshin.artifactstatus` | Show active artifact effects and bonuses. |
 | `/genshin removeholo [radius]` | `genshin.removeholo` | Remove nearby plugin holograms. |
@@ -66,9 +67,11 @@ Times are measured in server ticks (20 ticks per second) unless a setting explic
 
 Each item in `items.yml` defines `name`, `material`, `item-type`, `item-property`, `elemental-mastery`, and optional `lunar` or `stellar` settings. `item-type` is `physical`, `anemo`, `cryo`, `dendro`, `electro`, `geo`, `hydro`, or `pyro`. `item-property` is either `weapon` or `vision`.
 
-A configured weapon uses its `damage` value as base damage on melee and projectile hits, before resistance and other event modifiers. Damage must be between 0 and 2048. A weapon's elemental item type applies on a successful hit. A physical weapon applies no element. A carried vision infuses the player's weapons, overriding their type, mastery, and celestial modifier. This includes configured weapons and vanilla swords, axes, bows, crossbows, tridents, and maces. If multiple visions are carried, the first in inventory slot order is used. Non-weapon items and unarmed attacks are not infused.
+A configured weapon uses its `damage` value as base damage on melee and projectile hits, before resistance and other event modifiers. Damage must be between 0 and 2048. A weapon's elemental item type applies on a successful hit. A physical weapon applies no element. A carried vision infuses physical weapons, providing their elemental type, mastery, and celestial modifier. An elemental weapon keeps its own type, mastery, and modifier. This includes configured weapons and vanilla swords, axes, bows, crossbows, tridents, and maces. If multiple visions are carried, the first in inventory slot order is used. Non-weapon items and unarmed attacks are not infused. Infused weapons show temporary elemental lore, and the main-hand weapon emits matching particles. The lore is removed when the vision is no longer carried.
 
-Mastery belongs to the wielder and is snapshotted at the hit, or at launch for projectiles. Equipment bonuses are included. When the same wielder applies both elements, the lower of the two snapshots is used. When different wielders are involved, the triggering wielder's snapshot is used; environmental triggers use the existing application snapshot. Reaction damage and Crystallize shield strength are multiplied by `1 + EM / (EM + 1050)`. Items show configured mastery in lore and glow above 50 EM. Bundled visions have 1 mastery and gnoses are visions with 100 mastery.
+Items may define `elemental-damage-percent` from 0 to 1000. It increases direct elemental hit damage; a vision and the physical weapon it infuses add their bonuses. Physical damage and reaction damage are unaffected. The bonus is snapshotted at launch for projectiles. Lunar and stellar visions show Moonlit and Stellar in their lore.
+
+Mastery belongs to the wielder and is snapshotted at the hit, or at launch for projectiles. Equipment bonuses are included. When the same wielder applies both elements, the lower of the two snapshots is used. When different wielders are involved, the triggering wielder's snapshot is used; environmental triggers use the existing application snapshot. Reaction damage and Crystallize shield strength are multiplied by `1 + EM / (EM + 1050)`. Items show configured mastery in lore and glow above 50 EM. Newly given items have a maximum stack size of one and cannot be used in crafting, autocrafting, or smithing. Bundled visions have 1 mastery and gnoses are visions with 100 mastery.
 
 This is a breaking item configuration change: rename `damage-type` to `item-type`, add `item-property`, and set `damage` for weapons. Reload the plugin after editing. `/genshin register` creates a physical weapon definition from the held item's material. Custom reaction formulas retain their amount variables and also receive `elemental_mastery`. Resistances are configured under `damage.resistance` in `config.yml`.
 

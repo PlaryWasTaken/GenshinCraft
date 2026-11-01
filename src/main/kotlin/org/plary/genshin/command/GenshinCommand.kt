@@ -18,8 +18,8 @@ import java.util.logging.Level
 
 class GenshinCommand(private val plugin: Genshin) : CommandExecutor, TabCompleter {
     private val permissions = linkedMapOf("reload" to "reload", "register" to "register", "element" to "element",
-        "putelement" to "putelement", "give" to "give", "removeholo" to "removeholo", "armorstatus" to "armorstatus",
-        "artifactstatus" to "artifactstatus", "pos1" to "regions", "pos2" to "regions", "createregion" to "regions", "bonuselement" to "bonuselement")
+        "putelement" to "putelement", "give" to "give", "region" to "region", "removeholo" to "removeholo", "armorstatus" to "armorstatus",
+        "artifactstatus" to "artifactstatus", "weaponeffect" to "weaponeffect", "pos1" to "regions", "pos2" to "regions", "createregion" to "regions", "bonuselement" to "bonuselement")
 
     private fun allowed(sender: CommandSender, sub: String): Boolean = permissions[sub]?.let {
         sender.hasPermission("genshin.$it")
@@ -62,6 +62,22 @@ class GenshinCommand(private val plugin: Genshin) : CommandExecutor, TabComplete
                     val item = plugin.items.create(args[1])
                     target.inventory.addItem(item).values.forEach { target.world.dropItemNaturally(target.location, it) }
                     reply(sender, "&aGave ${args[1]} to ${target.name}.")
+                }
+                "region" -> {
+                    require(args.size == 1) { "Usage: /$label region" }
+                    VisionRegions.open(plugin, player(sender))
+                }
+                "weaponeffect" -> {
+                    require(args.size <= 2) { "Usage: /$label weaponeffect [on|off]" }
+                    val target = player(sender)
+                    val enabled = when (args.getOrNull(1)?.lowercase(Locale.ROOT)) {
+                        null -> !plugin.infusionVisuals.particlesEnabled(target)
+                        "on" -> true
+                        "off" -> false
+                        else -> throw IllegalArgumentException("Usage: /$label weaponeffect [on|off]")
+                    }
+                    plugin.infusionVisuals.setParticlesEnabled(target, enabled)
+                    reply(sender, if (enabled) "&aWeapon particles enabled." else "&7Weapon particles disabled.")
                 }
                 "removeholo" -> {
                     require(args.size <= 2) { "Usage: /$label removeholo [radius]" }
@@ -168,6 +184,7 @@ class GenshinCommand(private val plugin: Genshin) : CommandExecutor, TabComplete
             sub == "element" -> when (args.size) { 2 -> players; 3 -> elements; 4 -> listOf("1", "5", "10"); 5 -> listOf("5s", "10s", "100t"); else -> emptyList() }
             sub == "putelement" -> when (args.size) { 2 -> elements; 3 -> listOf("target", "area", "coneinfrontme"); 4 -> listOf("3", "6", "12"); 5 -> listOf("entities", "player"); 6 -> listOf("1", "5", "10"); else -> emptyList() }
             sub == "give" -> when (args.size) { 2 -> plugin.items.definitions.keys.toList(); 3 -> players; else -> emptyList() }
+            sub == "weaponeffect" && args.size == 2 -> listOf("on", "off")
             sub == "removeholo" && args.size == 2 -> listOf("8", "16", "32", "64")
             sub == "bonuselement" -> when (args.size) { 2 -> elements; 3 -> listOf("1.0", "1.25", "1.5", "2.0"); 4 -> players + "players"; 5 -> if (args[3].equals("player", true)) players else listOf("10", "30s", "60s"); 6 -> listOf("30s", "60s", "120s"); else -> emptyList() }
             else -> emptyList()

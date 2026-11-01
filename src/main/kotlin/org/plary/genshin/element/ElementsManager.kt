@@ -85,8 +85,10 @@ class ElementsManager(private val plugin: Genshin) {
             }
         } else {
             val ticks = (duration ?: plugin.config.getLong("states.${element.key}", 100)).coerceIn(1, 1728000)
-            states[id] = ElementState(element, amount, now + ticks, sourceId, currentMastery)
-            if (incomingModifier != null) modifiers[id] = incomingModifier
+            val expires = now + ticks
+            states[id] = if (ambient && previous?.element == element) previous.copy(expiresAt = maxOf(previous.expiresAt, expires))
+                else ElementState(element, amount, expires, sourceId, currentMastery)
+            if (incomingModifier != null) modifiers[id] = incomingModifier.copy(expiresAt = maxOf(incomingModifier.expiresAt, expires))
             plugin.holograms.state(target)
             plugin.particles.burst(element, target.location.add(0.0, target.height * 0.5, 0.0), 8)
         }

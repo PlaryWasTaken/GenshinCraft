@@ -1,5 +1,6 @@
 package org.plary.genshin.visual
 
+import org.bukkit.Color
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.Particle
@@ -43,14 +44,17 @@ class Particles {
             Element.PYRO -> Particle.FLAME
             Element.HYDRO -> Particle.SPLASH
             Element.CRYO -> Particle.SNOWFLAKE
-            Element.ELECTRO -> Particle.ELECTRIC_SPARK
+            Element.ELECTRO -> Particle.DUST
             Element.DENDRO -> Particle.HAPPY_VILLAGER
             Element.GEO -> Particle.BLOCK
             Element.ANEMO -> Particle.CLOUD
             Element.ELEMENTAL -> Particle.END_ROD
         }
-        if (element == Element.GEO) world.spawnParticle(particle, location, count, 0.25, 0.15, 0.25, 0.01, Material.STONE.createBlockData())
-        else world.spawnParticle(particle, location, count, 0.25, 0.15, 0.25, 0.01)
+        when (element) {
+            Element.GEO -> world.spawnParticle(particle, location, count, 0.25, 0.15, 0.25, 0.01, Material.STONE.createBlockData())
+            Element.ELECTRO -> world.spawnParticle(particle, location, count, 0.25, 0.15, 0.25, 0.01, Particle.DustOptions(Color.fromRGB(170, 85, 255), 1.0f))
+            else -> world.spawnParticle(particle, location, count, 0.25, 0.15, 0.25, 0.01)
+        }
     }
 
     fun ring(element: Element, center: Location, radius: Double) {

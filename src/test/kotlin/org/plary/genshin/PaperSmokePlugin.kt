@@ -92,15 +92,53 @@ class PaperSmokePlugin : JavaPlugin(), Listener {
                     fixture.set("items.$id.damage", 6.0)
                     fixture.set("items.$id.elemental-mastery", mastery)
                 }
+                fixture.set("items.vision_pyro.custom-model-data.strings", listOf("pyro_mondstat"))
                 genshin.items.load(fixture)
                 val vision = genshin.items.create("vision_pyro")
                 val gnosis = genshin.items.create("gnosis_pyro")
+                check(vision.itemMeta.customModelDataComponent.strings == listOf("pyro_mondstat"))
                 check(vision.type == org.bukkit.Material.BLAZE_ROD)
                 check(!vision.itemMeta.hasEnchantmentGlintOverride())
                 check(gnosis.itemMeta.enchantmentGlintOverride == true)
                 check(gnosis.enchantments.isEmpty())
                 val serializer = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
                 check(gnosis.itemMeta.lore()!!.any { serializer.serialize(it) == "Elemental Mastery: 100" })
+            }
+
+            verify("plugin items stay separate in a Paper inventory") {
+                val inventory = server.createInventory(null, 9)
+                val first = genshin.items.create("vision_pyro")
+                val second = genshin.items.create("vision_pyro")
+                check(first.maxStackSize == 1)
+                check(inventory.addItem(first, second).isEmpty())
+                check(inventory.contents.filterNotNull().map { it.amount } == listOf(1, 1))
+            }
+
+            verify("automated crafting rejects plugin ingredients but permits ordinary ones") {
+                val block = server.worlds.first().spawnLocation.clone().add(0.0, 100.0, 0.0).block
+                block.type = org.bukkit.Material.CRAFTER
+                try {
+                    val crafter = block.state as org.bukkit.block.Crafter
+                    val recipe = org.bukkit.inventory.ShapelessRecipe(org.bukkit.NamespacedKey(this, "smoke_crafter"), org.bukkit.inventory.ItemStack(org.bukkit.Material.BLAZE_POWDER))
+                    recipe.addIngredient(org.bukkit.Material.BLAZE_ROD)
+                    crafter.inventory.setItem(0, genshin.items.create("vision_pyro"))
+                    val blocked = org.bukkit.event.block.CrafterCraftEvent(block, recipe, recipe.result)
+                    server.pluginManager.callEvent(blocked)
+                    check(blocked.isCancelled)
+                    crafter.inventory.setItem(0, org.bukkit.inventory.ItemStack(org.bukkit.Material.BLAZE_ROD))
+                    val allowed = org.bukkit.event.block.CrafterCraftEvent(block, recipe, recipe.result)
+                    server.pluginManager.callEvent(allowed)
+                    check(!allowed.isCancelled)
+                } finally { block.type = org.bukkit.Material.AIR }
+            }
+
+            verify("infusion lore can be added and removed on Paper") {
+                val original = genshin.items.create("gnosis_pyro")
+                val infused = checkNotNull(genshin.infusionVisuals.update(original, Element.ELECTRO))
+                val serializer = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+                check(infused.itemMeta.lore()!!.any { serializer.serialize(it) == "Infused with Electro" })
+                val restored = checkNotNull(genshin.infusionVisuals.update(infused, null))
+                check(restored == original)
             }
 
             @Suppress("DEPRECATION")
@@ -124,6 +162,15 @@ class PaperSmokePlugin : JavaPlugin(), Listener {
                 check(genshin.elements.apply(target, Element.GEO, 1))
                 check(target.world.entities.count { genshin.isTemporary(it) } >= before + 3)
                 deferred += "lunar crystallize shots hit" to { check(target.health < 1000.0) }
+            }
+
+            verify("ambient hydro preserves lunar crystallize") {
+                val target = mob()
+                val before = target.world.entities.count { genshin.isTemporary(it) }
+                check(genshin.elements.apply(target, Element.HYDRO, 1, lunar = 10.0))
+                check(genshin.elements.apply(target, Element.HYDRO, 1, ambient = true))
+                check(genshin.elements.apply(target, Element.GEO, 1))
+                check(target.world.entities.count { genshin.isTemporary(it) } >= before + 3)
             }
 
             verify("stellar conduct creates physical resistance reduction") {

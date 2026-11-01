@@ -13,7 +13,7 @@ import org.plary.genshin.util.*
 import java.io.File
 import java.util.UUID
 
-data class Weapon(val element: Element, val amount: Int, val lunar: Double = 0.0, val stellar: Double = 0.0, val damageType: Element? = null, val baseDamage: Double? = null)
+data class Weapon(val element: Element, val amount: Int, val lunar: Double = 0.0, val stellar: Double = 0.0, val damageType: Element? = null, val baseDamage: Double? = null, val elementalDamagePercent: Double = 0.0)
 data class ItemDefinition(val id: String, val name: String, val weapon: Weapon?, val material: Material, val mastery: Int, val property: String)
 
 class ItemManager(private val plugin: Genshin) {
@@ -39,9 +39,11 @@ class ItemManager(private val plugin: Genshin) {
             val mastery = roundedAmount(config.numeric("$path.elemental-mastery", 0.0))
             val damage = if (property == "weapon") number(config.get("$path.damage"), Double.NaN) else 0.0
             require(damage.isFinite() && damage in 0.0..2048.0) { "Item '$id' damage must be between 0 and 2048." }
+            val bonus = number(config.get("$path.elemental-damage-percent"), if (config.contains("$path.elemental-damage-percent")) Double.NaN else 0.0)
+            require(bonus in 0.0..1000.0) { "Item '$id' elemental-damage-percent must be between 0 and 1000." }
             val weapon = Weapon(damageType ?: Element.ELEMENTAL, mastery,
                 if (lunar >= stellar) lunar else 0.0, if (stellar > lunar) stellar else 0.0,
-                damageType, if (property == "weapon") damage else null)
+                damageType, if (property == "weapon") damage else null, bonus)
             val materialName = config.getString("$path.material", "BLAZE_ROD") ?: "BLAZE_ROD"
             val material = Material.matchMaterial(materialName)?.takeIf { it.isItem && !it.isAir }
                 ?: throw IllegalArgumentException("Item '$id' has invalid material '$materialName'.")
@@ -60,21 +62,36 @@ class ItemManager(private val plugin: Genshin) {
         return if (meta.hasDisplayName()) byName[normalizedName(meta.displayName)] else null
     }
 
+    fun regionVisionElement(item: ItemStack?): Element? {
+        val def = definition(item) ?: return null
+        val element = def.weapon?.damageType ?: return null
+        return element.takeIf { def.property == "vision" && def.id == "vision_${element.key}" }
+    }
+
+    fun isPluginItem(item: ItemStack?): Boolean =
+        item?.itemMeta?.persistentDataContainer?.has(itemKey, PersistentDataType.STRING) == true
+
     fun weapon(item: ItemStack?): Weapon? = definition(item)?.takeIf { it.property == "weapon" }?.weapon
 
-    /** The first vision in inventory slot order infuses a held weapon. */
-    fun attack(source: LivingEntity, item: ItemStack?): Weapon? {
+    /** The first vision in inventory slot order determines the active infusion. */
+    fun vision(player: Player): Weapon? = player.inventory.contents.firstNotNullOfOrNull {
+        definition(it)?.takeIf { candidate -> candidate.property == "vision" }?.weapon
+    }
+
+    fun isWeapon(item: ItemStack?): Boolean {
         val configured = definition(item)
-        if (configured?.property == "vision") return null
-        val material = item?.type ?: return null
-        val vanillaWeapon = material.name.endsWith("_SWORD") || material.name.endsWith("_AXE") ||
+        if (configured != null) return configured.property == "weapon"
+        val material = item?.type ?: return false
+        return material.name.endsWith("_SWORD") || material.name.endsWith("_AXE") ||
             material in setOf(Material.BOW, Material.CROSSBOW, Material.TRIDENT, Material.MACE)
-        if (configured == null && !vanillaWeapon) return null
-        val base = configured?.weapon
-        val vision = (source as? Player)?.inventory?.contents?.firstNotNullOfOrNull {
-            definition(it)?.takeIf { candidate -> candidate.property == "vision" }?.weapon
-        }
-        if (vision != null) return vision.copy(baseDamage = base?.baseDamage)
+    }
+
+    fun attack(source: LivingEntity, item: ItemStack?): Weapon? {
+        if (!isWeapon(item)) return null
+        val base = weapon(item)
+        if (base?.damageType != null) return base
+        val vision = (source as? Player)?.let(::vision)
+        if (vision != null) return vision.copy(baseDamage = base?.baseDamage, elementalDamagePercent = (vision.elementalDamagePercent + (base?.elementalDamagePercent ?: 0.0)).coerceAtMost(1000.0))
         return base
     }
 
@@ -85,7 +102,24 @@ class ItemManager(private val plugin: Genshin) {
             editMeta {
                 it.displayName(component(definition.name))
                 it.persistentDataContainer.set(itemKey, PersistentDataType.STRING, id)
-                val lore = yaml.getStringList("items.$id.lore").map(::component) + component("&7Elemental Mastery: &f$mastery")
+                it.setMaxStackSize(1)
+                val strings = if (yaml.contains("items.$id.custom-model-data.strings"))
+                    yaml.getStringList("items.$id.custom-model-data.strings")
+                else if (id == "vision_${definition.weapon?.damageType?.key}")
+                    listOf("${definition.weapon?.damageType?.key}_mondstadt") else emptyList()
+                if (strings.isNotEmpty()) {
+                    val model = it.customModelDataComponent
+                    model.strings = strings
+                    it.setCustomModelDataComponent(model)
+                }
+                val lore = yaml.getStringList("items.$id.lore").map(::component).toMutableList()
+                lore += component("&7Elemental Mastery: &f$mastery")
+                val bonus = definition.weapon?.elementalDamagePercent ?: 0.0
+                if (yaml.contains("items.$id.elemental-damage-percent")) lore += component("&7Elemental Damage: &f+${if (bonus == bonus.toLong().toDouble()) bonus.toLong().toString() else bonus.toString()}%")
+                if (definition.property == "vision") {
+                    if ((definition.weapon?.lunar ?: 0.0) > 0) lore += component("&bMoonlit")
+                    if ((definition.weapon?.stellar ?: 0.0) > 0) lore += component("&dStellar")
+                }
                 it.lore(lore)
                 if (mastery > 50) it.setEnchantmentGlintOverride(true)
             }
@@ -106,6 +140,7 @@ class ItemManager(private val plugin: Genshin) {
         updated.set("$path.item-property", "weapon")
         updated.set("$path.damage", 1.0)
         updated.set("$path.elemental-mastery", 0)
+        updated.set("$path.elemental-damage-percent", 0)
         for (modifier in listOf("lunar", "stellar")) {
             updated.set("$path.$modifier.enabled", false)
             updated.set("$path.$modifier.bonus", 0)

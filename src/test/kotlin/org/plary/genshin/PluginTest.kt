@@ -48,6 +48,36 @@ class PluginTest {
         assertEquals(1.0, plugin.damage.resistanceMultiplier(null))
     }
 
+    @Test fun `plugin items are identified by persistent id and limited to one per stack`() {
+        val first = plugin.items.create("vision_pyro")
+        val second = plugin.items.create("vision_pyro")
+        assertTrue(plugin.items.isPluginItem(first))
+        assertTrue(plugin.items.isPluginItem(second))
+        assertEquals(1, first.maxStackSize)
+        assertEquals(1, second.maxStackSize)
+        val ordinary = ItemStack(first.type).apply { editMeta { it.displayName(first.itemMeta.displayName()) } }
+        assertFalse(plugin.items.isPluginItem(ordinary))
+        assertFalse(plugin.items.isPluginItem(null))
+    }
+
+    @Test fun `vision lore displays damage bonus and celestial modifier`() {
+        val config = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "items.yml"))
+        config.set("items.vision_pyro.elemental-damage-percent", 25.5)
+        config.set("items.vision_pyro.lunar.enabled", true)
+        config.set("items.vision_pyro.lunar.bonus", 10)
+        plugin.items.load(config)
+        val serializer = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+        fun lore() = plugin.items.create("vision_pyro").itemMeta.lore()!!.map(serializer::serialize)
+        assertTrue("Elemental Damage: +25.5%" in lore())
+        assertTrue("Moonlit" in lore())
+        config.set("items.vision_pyro.lunar.enabled", false)
+        config.set("items.vision_pyro.stellar.enabled", true)
+        config.set("items.vision_pyro.stellar.bonus", 10)
+        plugin.items.load(config)
+        assertTrue("Stellar" in lore())
+        assertFalse("Moonlit" in lore())
+    }
+
     @Test fun `configured material and mastery determine lore and glow`() {
         val config = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "items.yml"))
         config.set("items.vision_pyro.material", "BOW")
@@ -152,6 +182,23 @@ class PluginTest {
         assertEquals("1.5", expansion.onRequest(null, "reaction_mult_vaporize"))
     }
 
+    @Test fun `weapon particle preference is personal persistent and toggleable`() {
+        val player = server.addPlayer()
+        val other = server.addPlayer()
+        assertTrue(plugin.infusionVisuals.particlesEnabled(player))
+        server.dispatchCommand(player, "genshin weaponeffect off")
+        assertFalse(plugin.infusionVisuals.particlesEnabled(player))
+        assertTrue(plugin.infusionVisuals.particlesEnabled(other))
+        assertFalse(org.plary.genshin.visual.InfusionVisuals(plugin).particlesEnabled(player))
+        server.dispatchCommand(player, "genshin weaponeffect invalid")
+        assertFalse(plugin.infusionVisuals.particlesEnabled(player))
+        server.dispatchCommand(player, "genshin weaponeffect")
+        assertTrue(plugin.infusionVisuals.particlesEnabled(player))
+        server.dispatchCommand(player, "genshin weaponeffect off")
+        server.dispatchCommand(player, "genshin weaponeffect on")
+        assertTrue(plugin.infusionVisuals.particlesEnabled(player))
+    }
+
     @Test fun `bonus command enforces permissions and rejects nonfinite multipliers`() {
         val player = server.addPlayer()
         assertTrue(server.dispatchCommand(player, "genshin bonuselement pyro 2 player ${player.name} 10s"))
@@ -208,6 +255,23 @@ class PluginTest {
         assertEquals(Element.PYRO, plugin.elements.state(target.uniqueId)?.element)
     }
 
+    @Test fun `ambient refresh preserves celestial status and original mastery`() {
+        val target = target()
+        val source = server.addPlayer()
+        plugin.config.set("elements.apply-cooldown-ticks", 0)
+        plugin.config.set("states.hydro", 185)
+        plugin.config.set("states.lunar", 20)
+        assertTrue(plugin.elements.apply(target, Element.HYDRO, 7, source.uniqueId, lunar = 20.0, mastery = 7.0))
+        server.scheduler.performTicks(30)
+        assertTrue(plugin.elements.apply(target, Element.HYDRO, 2, ambient = true))
+        val state = plugin.elements.state(target.uniqueId)!!
+        assertEquals(source.uniqueId, state.sourceId)
+        assertEquals(7.0, state.mastery)
+        val modifier = plugin.elements.modifier(target.uniqueId)!!
+        assertEquals(org.plary.genshin.element.Reaction.LUNAR_CRYSTALLIZE,
+            org.plary.genshin.element.Reaction.determineSpecial(state.element, Element.GEO, modifier.lunar, modifier.stellar))
+    }
+
     @Suppress("DEPRECATION")
     @Test fun `vision infuses a configured weapon and preserves its base damage`() {
         val target = target()
@@ -216,16 +280,37 @@ class PluginTest {
         val config = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "items.yml"))
         config.set("items.lunar_hydro.item-type", "physical")
         config.set("items.lunar_hydro.damage", 8.0)
+        config.set("items.lunar_hydro.elemental-damage-percent", 20)
+        config.set("items.vision_pyro.elemental-damage-percent", 30)
         plugin.items.load(config)
         player.inventory.setItemInMainHand(plugin.items.create("lunar_hydro"))
         player.inventory.setItem(5, plugin.items.create("vision_pyro"))
         plugin.config.set("damage.resistance.pyro", 0.25)
         val hit = EntityDamageByEntityEvent(player, target, DamageCause.ENTITY_ATTACK, 2.0)
         server.pluginManager.callEvent(hit)
-        assertEquals(6.0, hit.damage, 1e-9)
+        assertEquals(9.0, hit.damage, 1e-9)
         server.scheduler.performTicks(1)
         assertEquals(Element.PYRO, plugin.elements.state(target.uniqueId)?.element)
         assertEquals(1.0, plugin.elements.state(target.uniqueId)?.mastery)
+    }
+
+    @Test fun `elemental weapon takes priority over vision`() {
+        val player = server.addPlayer()
+        player.inventory.setItem(4, plugin.items.create("gnosis_hydro"))
+        val config = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "items.yml"))
+        config.set("items.lunar_hydro.item-type", "pyro")
+        config.set("items.lunar_hydro.elemental-mastery", 7)
+        plugin.items.load(config)
+        val sword = plugin.items.create("lunar_hydro")
+        player.inventory.setItemInMainHand(sword)
+        val attack = plugin.items.attack(player, sword)!!
+        assertEquals(Element.PYRO, attack.damageType)
+        assertEquals(7, attack.amount)
+        assertEquals(20.0, attack.lunar)
+        plugin.infusionVisuals.reconcile(player)
+        val lore = player.inventory.itemInMainHand.itemMeta.lore().orEmpty()
+        val serializer = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+        assertFalse(lore.any { serializer.serialize(it).startsWith("Infused with") })
     }
 
     @Test fun `vision applies to vanilla weapons in inventory order and not to other items`() {
@@ -241,6 +326,52 @@ class PluginTest {
         player.inventory.setItem(4, null)
         assertEquals(Element.HYDRO, plugin.items.attack(player, sword)?.damageType)
         assertEquals(100, plugin.items.attack(player, sword)?.amount)
+    }
+
+    @Test fun `infusion lore follows vision changes without damaging existing item lore`() {
+        val player = server.addPlayer()
+        val sword = ItemStack(Material.IRON_SWORD).apply {
+            editMeta { it.lore(listOf(component("&aOriginal lore"))) }
+        }
+        val original = sword.clone()
+        player.inventory.setItem(0, sword)
+        val config = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "items.yml"))
+        config.set("items.lunar_hydro.item-type", "physical")
+        plugin.items.load(config)
+        player.inventory.setItem(1, plugin.items.create("lunar_hydro"))
+        player.inventory.setItem(5, plugin.items.create("vision_electro"))
+        val serializer = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText()
+        fun lore(slot: Int) = player.inventory.getItem(slot)!!.itemMeta.lore().orEmpty().map(serializer::serialize)
+
+        plugin.infusionVisuals.reconcile(player)
+        assertEquals(listOf("Original lore", "Infused with Electro"), lore(0))
+        assertEquals(net.kyori.adventure.text.format.NamedTextColor.DARK_PURPLE,
+            player.inventory.getItem(0)!!.itemMeta.lore()!!.last().color())
+        assertEquals("Infused with Electro", lore(1).last())
+        assertFalse(lore(5).any { it.startsWith("Infused with") })
+        plugin.infusionVisuals.reconcile(player)
+        assertEquals(2, lore(0).size)
+
+        player.inventory.setItem(5, plugin.items.create("vision_hydro"))
+        plugin.infusionVisuals.reconcile(player)
+        assertEquals(listOf("Original lore", "Infused with Hydro"), lore(0))
+        player.inventory.setItem(5, null)
+        plugin.infusionVisuals.reconcile(player)
+        assertEquals(original, player.inventory.getItem(0))
+        assertFalse(lore(1).any { it.startsWith("Infused with") })
+    }
+
+    @Test fun `infusion cleanup preserves an identical existing lore line`() {
+        val original = ItemStack(Material.DIAMOND_SWORD).apply {
+            editMeta { it.lore(listOf(net.kyori.adventure.text.Component.text("Infused with Electro",
+                net.kyori.adventure.text.format.NamedTextColor.DARK_PURPLE)
+                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false))) }
+        }
+        val infused = plugin.infusionVisuals.update(original, Element.ELECTRO)!!
+        assertEquals(2, infused.itemMeta.lore()!!.size)
+        val restored = plugin.infusionVisuals.update(infused, null)!!
+        assertEquals(original, restored)
+        assertNull(plugin.infusionVisuals.update(restored, null))
     }
 
     @Suppress("DEPRECATION")
@@ -264,6 +395,8 @@ class PluginTest {
         player.teleport(target.location)
         val config = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "items.yml"))
         config.set("items.lunar_hydro.material", "BOW")
+        config.set("items.lunar_hydro.item-type", "physical")
+        config.set("items.gnosis_pyro.elemental-damage-percent", 50)
         plugin.items.load(config)
         val bow = plugin.items.create("lunar_hydro")
         player.inventory.setItem(5, plugin.items.create("gnosis_pyro"))
@@ -276,7 +409,9 @@ class PluginTest {
         player.inventory.setItem(5, null)
         player.inventory.setItemInMainHand(ItemStack(Material.STICK))
         plugin.equipment.clear(player.uniqueId)
-        server.pluginManager.callEvent(EntityDamageByEntityEvent(arrow, target, DamageCause.PROJECTILE, 1.0))
+        val hit = EntityDamageByEntityEvent(arrow, target, DamageCause.PROJECTILE, 1.0)
+        server.pluginManager.callEvent(hit)
+        assertEquals(9.0, hit.damage, 1e-9)
         server.scheduler.performTicks(1)
         assertEquals(Element.PYRO, plugin.elements.state(target.uniqueId)?.element)
         assertEquals(200, plugin.elements.state(target.uniqueId)?.amount)

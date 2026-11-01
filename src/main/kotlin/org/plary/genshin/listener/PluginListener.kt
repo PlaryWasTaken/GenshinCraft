@@ -9,6 +9,14 @@ import org.bukkit.event.Listener
 import org.bukkit.event.entity.*
 import org.bukkit.event.player.PlayerChangedWorldEvent
 import org.bukkit.event.player.PlayerMoveEvent
+import org.bukkit.event.player.PlayerDropItemEvent
+import org.bukkit.event.inventory.InventoryCloseEvent
+import org.bukkit.event.inventory.PrepareItemCraftEvent
+import org.bukkit.event.inventory.CraftItemEvent
+import org.bukkit.event.inventory.PrepareSmithingEvent
+import org.bukkit.event.inventory.SmithItemEvent
+import org.bukkit.event.block.CrafterCraftEvent
+import org.bukkit.block.Crafter
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.event.world.EntitiesLoadEvent
 import org.bukkit.event.world.EntitiesUnloadEvent
@@ -19,10 +27,19 @@ import org.plary.genshin.item.Weapon
 import java.util.UUID
 
 class PluginListener(private val plugin: Genshin) : Listener {
+    @EventHandler(priority = EventPriority.HIGH)
+    fun onVisionUse(event: org.bukkit.event.player.PlayerInteractEvent) {
+        if (event.action != org.bukkit.event.block.Action.RIGHT_CLICK_AIR && event.action != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) return
+        if (event.item?.type == org.bukkit.Material.ENDER_EYE && plugin.items.regionVisionElement(event.item) != null) {
+            event.setUseItemInHand(org.bukkit.event.Event.Result.DENY)
+        }
+    }
+
     private val elementKey = NamespacedKey(plugin, "projectile-element")
     private val amountKey = NamespacedKey(plugin, "projectile-amount")
     private val lunarKey = NamespacedKey(plugin, "projectile-lunar")
     private val stellarKey = NamespacedKey(plugin, "projectile-stellar")
+    private val damageBonusKey = NamespacedKey(plugin, "projectile-elemental-damage-percent")
     private val baseDamageKey = NamespacedKey(plugin, "projectile-base-damage")
     private val damageTypeKey = NamespacedKey(plugin, "projectile-damage-type")
 
@@ -33,6 +50,7 @@ class PluginListener(private val plugin: Genshin) : Listener {
         projectile.persistentDataContainer.apply {
             set(elementKey, PersistentDataType.STRING, weapon.element.key)
             set(amountKey, PersistentDataType.INTEGER, weapon.amount)
+            set(damageBonusKey, PersistentDataType.DOUBLE, weapon.elementalDamagePercent)
             set(lunarKey, PersistentDataType.DOUBLE, weapon.lunar)
             set(stellarKey, PersistentDataType.DOUBLE, weapon.stellar)
             weapon.damageType?.let { set(damageTypeKey, PersistentDataType.STRING, it.key) }
@@ -45,7 +63,7 @@ class PluginListener(private val plugin: Genshin) : Listener {
         val element = Element.parse(pdc.get(elementKey, PersistentDataType.STRING)) ?: return null
         val amount = pdc.get(amountKey, PersistentDataType.INTEGER) ?: return null
         return Weapon(element, amount, pdc.get(lunarKey, PersistentDataType.DOUBLE) ?: 0.0, pdc.get(stellarKey, PersistentDataType.DOUBLE) ?: 0.0,
-            Element.parse(pdc.get(damageTypeKey, PersistentDataType.STRING)), pdc.get(baseDamageKey, PersistentDataType.DOUBLE))
+            Element.parse(pdc.get(damageTypeKey, PersistentDataType.STRING)), pdc.get(baseDamageKey, PersistentDataType.DOUBLE), pdc.get(damageBonusKey, PersistentDataType.DOUBLE) ?: 0.0)
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -103,7 +121,9 @@ class PluginListener(private val plugin: Genshin) : Listener {
         val type = damageType(event)
         if (event is EntityDamageByEntityEvent && event.cause in setOf(EntityDamageEvent.DamageCause.ENTITY_ATTACK,
                 EntityDamageEvent.DamageCause.ENTITY_SWEEP_ATTACK, EntityDamageEvent.DamageCause.PROJECTILE)) {
-            fromDamager(event.damager)?.second?.baseDamage?.let { event.damage = it }
+            val weapon = fromDamager(event.damager)?.second
+            weapon?.baseDamage?.let { event.damage = it }
+            if (type != null && weapon != null) event.damage *= 1.0 + weapon.elementalDamagePercent / 100.0
         }
         event.damage *= plugin.damage.resistanceMultiplier(type)
         if (type == null) event.damage *= maxOf(plugin.reactions.physicalDamageMultiplier(target.uniqueId), plugin.specialReactions.physicalMultiplier(target))
@@ -169,8 +189,49 @@ class PluginListener(private val plugin: Genshin) : Listener {
         if (event.from.blockX != to.blockX || event.from.blockY != to.blockY || event.from.blockZ != to.blockZ) plugin.ambient.scan(event.player)
     }
 
-    @EventHandler fun onDeath(event: EntityDeathEvent) { plugin.clearEntity(event.entity.uniqueId) }
-    @EventHandler fun onQuit(event: PlayerQuitEvent) { plugin.clearEntity(event.player.uniqueId); plugin.regions.forget(event.player.uniqueId) }
+    @EventHandler(priority = EventPriority.HIGH)
+    fun onPrepareCraft(event: PrepareItemCraftEvent) {
+        if (event.inventory.matrix.any(plugin.items::isPluginItem) || plugin.items.isPluginItem(event.inventory.result))
+            event.inventory.result = null
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    fun onCraft(event: CraftItemEvent) {
+        if (event.inventory.matrix.any(plugin.items::isPluginItem) || plugin.items.isPluginItem(event.currentItem)) event.isCancelled = true
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    fun onPrepareSmithing(event: PrepareSmithingEvent) {
+        val inventory = event.inventory
+        if (listOf(inventory.inputTemplate, inventory.inputEquipment, inventory.inputMineral, event.result).any(plugin.items::isPluginItem)) event.result = null
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    fun onSmith(event: SmithItemEvent) {
+        val inventory = event.inventory
+        if (listOf(inventory.inputTemplate, inventory.inputEquipment, inventory.inputMineral, event.currentItem).any(plugin.items::isPluginItem)) event.isCancelled = true
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    fun onCrafter(event: CrafterCraftEvent) {
+        val crafter = event.block.state as? Crafter ?: return
+        if (crafter.inventory.contents.any(plugin.items::isPluginItem) || plugin.items.isPluginItem(event.result)) event.isCancelled = true
+    }
+
+    @EventHandler fun onDeath(event: EntityDeathEvent) {
+        if (event.entity is Player) {
+            for (index in event.drops.indices) plugin.infusionVisuals.update(event.drops[index], null)?.let { event.drops[index] = it }
+        }
+        plugin.clearEntity(event.entity.uniqueId)
+    }
+    @EventHandler(ignoreCancelled = true) fun onDrop(event: PlayerDropItemEvent) {
+        val dropped = event.itemDrop
+        plugin.infusionVisuals.update(dropped.itemStack, null)?.let { dropped.itemStack = it }
+    }
+    @EventHandler fun onInventoryClose(event: InventoryCloseEvent) {
+        if (event.inventory !== event.player.inventory) plugin.infusionVisuals.clean(event.inventory)
+    }
+    @EventHandler fun onQuit(event: PlayerQuitEvent) { plugin.infusionVisuals.clear(event.player); plugin.clearEntity(event.player.uniqueId); plugin.regions.forget(event.player.uniqueId) }
     @EventHandler fun onWorldChange(event: PlayerChangedWorldEvent) { plugin.clearEntity(event.player.uniqueId) }
 
     @EventHandler fun onUnload(event: EntitiesUnloadEvent) {

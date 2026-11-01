@@ -10,7 +10,7 @@ softdepend: [WorldGuard, WorldEdit, Citizens, MMOCore, PlaceholderAPI]
 commands:
   genshin:
     description: Elemental combat, items, regions and configuration
-    usage: /genshin <reload|register|element|putelement|give|removeholo|armorstatus|artifactstatus|pos1|pos2|createregion|bonuselement>
+    usage: /genshin <reload|register|element|putelement|give|region|removeholo|weaponeffect|armorstatus|artifactstatus|pos1|pos2|createregion|bonuselement>
     aliases: [tg]
 permissions:
   genshin.reload:
@@ -23,8 +23,12 @@ permissions:
     default: op
   genshin.give:
     default: op
+  genshin.region:
+    default: true
   genshin.removeholo:
     default: op
+  genshin.weaponeffect:
+    default: true
   genshin.armorstatus:
     default: true
   genshin.artifactstatus:
@@ -41,7 +45,9 @@ permissions:
       genshin.element: true
       genshin.putelement: true
       genshin.give: true
+      genshin.region: true
       genshin.removeholo: true
+      genshin.weaponeffect: true
       genshin.armorstatus: true
       genshin.artifactstatus: true
       genshin.regions: true

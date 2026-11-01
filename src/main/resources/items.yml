@@ -1,83 +1,97 @@
 # material is a Bukkit item material. Physical damage applies no element.
 # Lunar and stellar modifiers are mutually exclusive.
+# Optional custom-model-data.strings sets the Minecraft custom model data strings.
+# Optional elemental-damage-percent increases direct elemental damage (0 to 1000).
 items:
-  stellar_cryo:
+  stellar_linchpin_cryo:
     name: '<gradient:#80ffff:#1e05fa>Stellar linchpin</gradient>'
     material: BLAZE_ROD
     item-type: cryo
-    item-property: weapon
-    damage: 6.0
+    item-property: vision
     elemental-mastery: 1
     lunar: { enabled: false, bonus: 0 }
     stellar: { enabled: true, bonus: 20 }
-  lunar_hydro:
+  lunar_authority:
     name: '<gradient:#83a4fc:#34b0cb>Tri-lunar authority</gradient>'
     material: BLAZE_ROD
     item-type: hydro
-    item-property: weapon
-    damage: 6.0
+    item-property: vision
     elemental-mastery: 1
     lunar: { enabled: true, bonus: 20 }
     stellar: { enabled: false, bonus: 0 }
   vision_anemo:
     name: '<#8ce6ff>Anemo Vision</#8ce6ff>'
-    material: BLAZE_ROD
+    material: ENDER_EYE
     item-type: anemo
     item-property: vision
+    custom-model-data:
+      strings: [anemo_mondstadt]
     elemental-mastery: 1
     lunar: { enabled: false, bonus: 0 }
     stellar: { enabled: false, bonus: 0 }
   vision_cryo:
     name: '<#9fffff>Cryo Vision</#9fffff>'
-    material: BLAZE_ROD
+    material: ENDER_EYE
     item-type: cryo
     item-property: vision
+    custom-model-data:
+      strings: [cryo_mondstadt]
     elemental-mastery: 1
     lunar: { enabled: false, bonus: 0 }
     stellar: { enabled: false, bonus: 0 }
   vision_dendro:
     name: '<#8cff8c>Dendro Vision</#8cff8c>'
-    material: BLAZE_ROD
+    material: ENDER_EYE
     item-type: dendro
     item-property: vision
+    custom-model-data:
+      strings: [dendro_mondstadt]
     elemental-mastery: 1
     lunar: { enabled: false, bonus: 0 }
     stellar: { enabled: false, bonus: 0 }
   vision_electro:
     name: '<#c88cff>Electro Vision</#c88cff>'
-    material: BLAZE_ROD
+    material: ENDER_EYE
     item-type: electro
     item-property: vision
+    custom-model-data:
+      strings: [electro_mondstadt]
     elemental-mastery: 1
     lunar: { enabled: false, bonus: 0 }
     stellar: { enabled: false, bonus: 0 }
   vision_geo:
     name: '<#ffcc55>Geo Vision</#ffcc55>'
-    material: BLAZE_ROD
+    material: ENDER_EYE
     item-type: geo
     item-property: vision
+    custom-model-data:
+      strings: [geo_mondstadt]
     elemental-mastery: 1
     lunar: { enabled: false, bonus: 0 }
     stellar: { enabled: false, bonus: 0 }
   vision_hydro:
     name: '<#55bfff>Hydro Vision</#55bfff>'
-    material: BLAZE_ROD
+    material: ENDER_EYE
     item-type: hydro
     item-property: vision
+    custom-model-data:
+      strings: [hydro_mondstadt]
     elemental-mastery: 1
     lunar: { enabled: false, bonus: 0 }
     stellar: { enabled: false, bonus: 0 }
   vision_pyro:
     name: '<#ff6655>Pyro Vision</#ff6655>'
-    material: BLAZE_ROD
+    material: ENDER_EYE
     item-type: pyro
     item-property: vision
+    custom-model-data:
+      strings: [pyro_mondstadt]
     elemental-mastery: 1
     lunar: { enabled: false, bonus: 0 }
     stellar: { enabled: false, bonus: 0 }
   gnosis_anemo:
     name: '<#8ce6ff>Anemo Gnosis</#8ce6ff>'
-    material: BLAZE_ROD
+    material: NETHER_STAR
     item-type: anemo
     item-property: vision
     elemental-mastery: 100
@@ -85,7 +99,7 @@ items:
     stellar: { enabled: false, bonus: 0 }
   gnosis_cryo:
     name: '<#9fffff>Cryo Gnosis</#9fffff>'
-    material: BLAZE_ROD
+    material: NETHER_STAR
     item-type: cryo
     item-property: vision
     elemental-mastery: 100
@@ -93,7 +107,7 @@ items:
     stellar: { enabled: false, bonus: 0 }
   gnosis_dendro:
     name: '<#8cff8c>Dendro Gnosis</#8cff8c>'
-    material: BLAZE_ROD
+    material: NETHER_STAR
     item-type: dendro
     item-property: vision
     elemental-mastery: 100
@@ -101,7 +115,7 @@ items:
     stellar: { enabled: false, bonus: 0 }
   gnosis_electro:
     name: '<#c88cff>Electro Gnosis</#c88cff>'
-    material: BLAZE_ROD
+    material: NETHER_STAR
     item-type: electro
     item-property: vision
     elemental-mastery: 100
@@ -109,7 +123,7 @@ items:
     stellar: { enabled: false, bonus: 0 }
   gnosis_geo:
     name: '<#ffcc55>Geo Gnosis</#ffcc55>'
-    material: BLAZE_ROD
+    material: NETHER_STAR
     item-type: geo
     item-property: vision
     elemental-mastery: 100
@@ -117,7 +131,7 @@ items:
     stellar: { enabled: false, bonus: 0 }
   gnosis_hydro:
     name: '<#55bfff>Hydro Gnosis</#55bfff>'
-    material: BLAZE_ROD
+    material: NETHER_STAR
     item-type: hydro
     item-property: vision
     elemental-mastery: 100
@@ -125,7 +139,7 @@ items:
     stellar: { enabled: false, bonus: 0 }
   gnosis_pyro:
     name: '<#ff6655>Pyro Gnosis</#ff6655>'
-    material: BLAZE_ROD
+    material: NETHER_STAR
     item-type: pyro
     item-property: vision
     elemental-mastery: 100

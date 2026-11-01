@@ -14,6 +14,7 @@ import org.plary.genshin.combat.Protection
 import org.plary.genshin.combat.ReactionsManager
 import org.plary.genshin.combat.SpecialReactions
 import org.plary.genshin.command.GenshinCommand
+import org.plary.genshin.command.VisionRegions
 import org.plary.genshin.element.ElementsManager
 import org.plary.genshin.equipment.EquipmentManager
 import org.plary.genshin.integration.GenshinExpansion
@@ -22,6 +23,7 @@ import org.plary.genshin.item.ItemManager
 import org.plary.genshin.listener.PluginListener
 import org.plary.genshin.region.RegionManager
 import org.plary.genshin.visual.Holograms
+import org.plary.genshin.visual.InfusionVisuals
 import org.plary.genshin.visual.Particles
 import java.io.File
 import java.util.UUID
@@ -54,6 +56,8 @@ open class Genshin : JavaPlugin() {
         private set
     lateinit var regions: RegionManager
         private set
+    lateinit var infusionVisuals: InfusionVisuals
+        private set
     lateinit var holograms: Holograms
         private set
     val particles = Particles()
@@ -76,6 +80,7 @@ open class Genshin : JavaPlugin() {
             equipment = EquipmentManager(this)
             protection = Protection(this)
             holograms = Holograms(this)
+            infusionVisuals = InfusionVisuals(this)
             elements = ElementsManager(this)
             reactions = ReactionsManager(this)
             specialReactions = SpecialReactions(this)
@@ -86,6 +91,7 @@ open class Genshin : JavaPlugin() {
             reloadAll()
             Bukkit.getWorlds().flatMap { it.entities }.filter(::isTemporary).forEach { it.remove() }
             server.pluginManager.registerEvents(PluginListener(this), this)
+            server.pluginManager.registerEvents(VisionRegions(this), this)
             val command = GenshinCommand(this)
             requireNotNull(getCommand("genshin")) { "Missing genshin command in plugin.yml" }.apply {
                 setExecutor(command)
@@ -136,6 +142,8 @@ open class Genshin : JavaPlugin() {
             blooms.tick()
             ambient.tick()
             if (ticks % 2L == 0L) holograms.tick()
+            if (ticks % 5L == 0L) Bukkit.getOnlinePlayers().forEach(infusionVisuals::reconcile)
+            if (ticks % 10L == 0L) Bukkit.getOnlinePlayers().forEach(infusionVisuals::particles)
             if (ticks % 20L == 0L) { equipment.cleanup(); damage.cleanup() }
         }, 1L, 1L)
     }
@@ -164,6 +172,7 @@ open class Genshin : JavaPlugin() {
 
     override fun onDisable() {
         server.scheduler.cancelTasks(this)
+        if (::infusionVisuals.isInitialized) Bukkit.getOnlinePlayers().forEach(infusionVisuals::clear)
         expansion?.unregister()
         expansion = null
         clearRuntime()
